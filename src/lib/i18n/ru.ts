@@ -201,6 +201,12 @@ const ru: Dictionary = {
   delayBanner: {
     alternatives: 'Альтернативы',
   },
+  menu: {
+    open: 'Меню',
+    close: 'Закрыть меню',
+    myRoutes: 'Мои маршруты',
+    empty: 'Сохранённых маршрутов пока нет. Найдите поездку и нажмите на звёздочку, чтобы сохранить.',
+  },
   favorite: {
     removeAria: 'Удалить избранное {from} — {to}',
     lastKnown: 'последние данные {ago}',

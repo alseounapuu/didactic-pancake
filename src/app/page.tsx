@@ -14,11 +14,13 @@ import { NearbyButton } from '@/components/NearbyButton'
 import { NearbyPanel } from '@/components/NearbyPanel'
 import { FilterButton } from '@/components/FilterButton'
 import { FilterPanel } from '@/components/FilterPanel'
+import { MenuButton } from '@/components/MenuButton'
+import { MyRoutesMenu } from '@/components/MyRoutesMenu'
 import { DelayToast } from '@/components/DelayToast'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TimetablePanel } from '@/components/TimetablePanel'
 import { StopBoard, StopBoardTarget } from '@/components/StopBoard'
-import { TransportMode, VehiclePosition, ServiceAlert, StopDeparture, SharePosition, RouteLeg } from '@/lib/types'
+import { FavoriteRoute, TransportMode, VehiclePosition, ServiceAlert, StopDeparture, SharePosition, RouteLeg } from '@/lib/types'
 import { RidingPanel } from '@/components/RidingPanel'
 import { useRidingMode } from '@/hooks/use-riding-mode'
 import { useDepartureAlert } from '@/hooks/use-departure-alert'
@@ -94,6 +96,11 @@ function HomeContent() {
   const [showIssues, setShowIssues] = useState(false)
   const [showNearby, setShowNearby] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
+  // Left-half "My routes" menu (saved favorites), opened by the hamburger
+  // button; a pick is handed to SearchPanel via externalTrip so its From/To
+  // fields fill in and the search runs exactly like tapping a favorite chip.
+  const [showMenu, setShowMenu] = useState(false)
+  const [externalTrip, setExternalTrip] = useState<{ key: number; favorite: FavoriteRoute } | null>(null)
   // The filter actually applied to the map right now.
   const [lineFilter, setLineFilter] = useState<LineFilter | null>(null)
   // The line ready to apply — set whenever a line is searched or a vehicle
@@ -701,7 +708,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           className="absolute top-3 left-3 right-11 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-30 sm:w-[88%] sm:max-w-lg pointer-events-none"
         >
           <div className="pointer-events-auto">
-            <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} wheelchair={wheelchair} onWheelchairToggle={() => setWheelchair((w) => !w)} onViewStopBoard={handleViewStopBoard} onSelectLine={handleSelectLine} />
+            <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} wheelchair={wheelchair} onWheelchairToggle={() => setWheelchair((w) => !w)} onViewStopBoard={handleViewStopBoard} onSelectLine={handleSelectLine} externalTrip={externalTrip} />
           </div>
           {/* Vehicle markers on the map are otherwise silent about their own
               data source going down — a rider watching a frozen or empty map
@@ -915,6 +922,25 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
             }}
           />
         </div>
+      )}
+
+      {/* Menu button - bottom left, just above the map's locate control. Hidden
+          under the same conditions as the FABs, plus while the timetable panel
+          occupies this corner. */}
+      {!selectedRoute && !resultsSheetVisible && !selectedVehicle && (
+        <div className="absolute bottom-16 left-2.5 z-[45] pointer-events-auto">
+          <MenuButton onClick={() => setShowMenu(true)} />
+        </div>
+      )}
+
+      {showMenu && (
+        <MyRoutesMenu
+          onSelect={(favorite) => {
+            setExternalTrip({ key: Date.now(), favorite })
+            setShowMenu(false)
+          }}
+          onClose={() => setShowMenu(false)}
+        />
       )}
 
       {/* Logo - bottom center */}

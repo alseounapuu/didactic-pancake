@@ -200,6 +200,12 @@ const en = {
   delayBanner: {
     alternatives: 'Alternatives',
   },
+  menu: {
+    open: 'Menu',
+    close: 'Close menu',
+    myRoutes: 'My routes',
+    empty: 'No saved routes yet. Search a trip and tap the star to save it.',
+  },
   favorite: {
     removeAria: 'Remove favorite {from} to {to}',
     lastKnown: 'last known {ago}',

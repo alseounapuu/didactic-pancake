@@ -201,6 +201,12 @@ const et: Dictionary = {
   delayBanner: {
     alternatives: 'Alternatiivid',
   },
+  menu: {
+    open: 'Menüü',
+    close: 'Sulge menüü',
+    myRoutes: 'Minu marsruudid',
+    empty: 'Salvestatud marsruute pole veel. Otsi sõit ja salvesta see tähega.',
+  },
   favorite: {
     removeAria: 'Eemalda lemmik {from} kuni {to}',
     lastKnown: 'viimati teadaolev {ago}',
