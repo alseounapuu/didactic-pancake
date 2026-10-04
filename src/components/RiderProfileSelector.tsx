@@ -1,7 +1,5 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { Ticket } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n/context'
 import { useRiderProfile } from '@/hooks/use-rider-profile'
 import { RiderCategory } from '@/lib/fares/tariffs'
@@ -9,8 +7,9 @@ import { CITIES } from '@/lib/constants'
 
 const AGE_BANDS: RiderCategory[] = ['child', 'youth', 'adult', 'senior']
 
-// The age-band + residency pickers, shared by the dropdown below and the
-// Settings drawer.
+// The rider's fare profile (age band + residency), shown in Settings. Fare
+// pricing (src/lib/fares/price.ts) reads the same hook directly wherever a
+// RouteCard renders, so nothing needs plumbing through the search/plan calls.
 export function RiderProfileFields() {
   const { t } = useTranslation()
   const { profile, setAgeBand, setResidentOf } = useRiderProfile()
@@ -48,48 +47,5 @@ export function RiderProfileFields() {
        ))}
      </select>
     </>
-  )
-}
-
-// Self-contained like LanguageSelector — reads/writes the rider's fare
-// profile straight from localStorage via useRiderProfile, with no props from
-// SearchPanel/page.tsx. Fare pricing (src/lib/fares/price.ts) reads the same
-// hook directly wherever a RouteCard renders, so this never needs plumbing
-// through the search/plan call chain the way wheelchair mode does.
-export function RiderProfileSelector() {
-  const { t } = useTranslation()
-  const { profile } = useRiderProfile()
-  const [expanded, setExpanded] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!expanded) return
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setExpanded(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [expanded])
-
-  const customized = profile.ageBand !== 'adult' || !!profile.residentOf
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-        aria-label={t('fare.profileTitle')}
-        title={t('fare.profileTitle')}
-        className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center shadow-md border ${customized ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-      >
-        <Ticket size={20} />
-      </button>
-      {expanded && (
-        <div className="absolute top-12 right-0 z-50 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 p-3 w-56">
-          <RiderProfileFields />
-        </div>
-      )}
-    </div>
   )
 }
