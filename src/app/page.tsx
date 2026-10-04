@@ -30,6 +30,7 @@ import { OVERVIEW_THRESHOLD_SEC, findVehicleForLeg, distanceMeters } from '@/lib
 import { resolveTravellerPosition } from '@/lib/traveller-position'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { useVehicles } from '@/hooks/use-vehicles'
+import { useShowAllVehicles } from '@/hooks/use-show-all-vehicles'
 import { useRoutePlan } from '@/hooks/use-route-plan'
 import { useAlerts } from '@/hooks/use-alerts'
 import { useDelays } from '@/hooks/use-delays'
@@ -67,6 +68,7 @@ function HomeContent() {
   // alternatives" re-search below (which calls the plan hook directly) can
   // still honor it.
   const [wheelchair, setWheelchair] = useState(false)
+  const { showAll: showAllVehicles } = useShowAllVehicles()
   // Set when a marker click can't produce a route shape at all (see
   // MapView's onRouteShapeError) — otherwise that click just silently does
   // nothing, indistinguishable from the tap not registering.
@@ -648,7 +650,13 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
   // Applied after extraMapVehicle is merged in -- a line filter matching that
   // vehicle should still keep it visible, same as any other vehicle on the
   // map.
-  const filteredMapVehicles = useMemo(() => applyLineFilter(mapVehicles, lineFilter), [mapVehicles, lineFilter])
+  const filteredMapVehicles = useMemo(() => {
+    const filtered = applyLineFilter(mapVehicles, lineFilter)
+    if (showAllVehicles || !filtered) return filtered
+    // "Show all vehicles" is off: keep only the tapped vehicle and the
+    // vehicles running the selected route's legs.
+    return filtered.filter((v) => v.id === selectedVehicle?.id || journeyTripIds.has(v.id))
+  }, [mapVehicles, lineFilter, showAllVehicles, selectedVehicle?.id, journeyTripIds])
 
   return (
     <main className="h-dvh relative overflow-hidden">
@@ -936,7 +944,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           onBack={() => setMenuSection('menu')}
         />
       )}
-      {menuSection === 'settings' && <SettingsMenu onClose={() => setMenuSection(null)} onBack={() => setMenuSection('menu')} />}
+      {menuSection === 'settings' && <SettingsMenu onClose={() => setMenuSection(null)} onBack={() => setMenuSection('menu')} wheelchair={wheelchair} onWheelchairToggle={() => setWheelchair((w) => !w)} />}
 
       {/* Logo - bottom center */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-60">

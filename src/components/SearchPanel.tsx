@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Star, Accessibility } from 'lucide-react'
 import { LocationInput } from './LocationInput'
 import { CitySelector } from './CitySelector'
@@ -143,6 +143,20 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
       { enableHighAccuracy: true, timeout: 10000 },
     )
   }
+
+  // OTP's own accessibility cost model already penalizes unknown/inaccessible
+  // legs rather than banning them (see otp/router-config.json), so toggling
+  // wheelchair mode -- from here or from Settings -- can change which
+  // itinerary comes back first even without touching from/to. Re-run the
+  // search right away, same "act immediately" pattern as the time-mode button.
+  const prevWheelchairRef = useRef(wheelchair)
+  useEffect(() => {
+    if (prevWheelchairRef.current === wheelchair) return
+    prevWheelchairRef.current = wheelchair
+    if (fromCoords && toCoords) handleSearch(fromCoords, toCoords, fromText, toText, dateTime, timeMode === 'arrive', wheelchair)
+    // Only re-run when the wheelchair flag flips.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wheelchair])
 
   const handleSetHomeWork = (slot: 'home' | 'work') => {
     if (!toCoords) return
@@ -430,15 +444,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
         {onWheelchairToggle && (
           <button
             type="button"
-            onClick={() => {
-              onWheelchairToggle()
-              // OTP's own accessibility cost model already penalizes
-              // unknown/inaccessible legs rather than banning them (see
-              // otp/router-config.json), so toggling this can change which
-              // itinerary comes back first even without touching from/to —
-              // same "act immediately" pattern as the time-mode button.
-              if (fromCoords && toCoords) handleSearch(fromCoords, toCoords, fromText, toText, dateTime, timeMode === 'arrive', !wheelchair)
-            }}
+            onClick={onWheelchairToggle}
             title={wheelchair ? t('search.wheelchairOn') : t('search.wheelchairOff')}
             aria-label={wheelchair ? t('search.wheelchairOn') : t('search.wheelchairOff')}
             aria-pressed={wheelchair}
