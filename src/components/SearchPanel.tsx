@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Star, Accessibility } from 'lucide-react'
 import { LocationInput } from './LocationInput'
 import { CitySelector } from './CitySelector'
@@ -9,7 +9,7 @@ import { RecentChip } from './RecentChip'
 import { HomeWorkChip } from './HomeWorkChip'
 import { LanguageSelector } from './LanguageSelector'
 import { RiderProfileSelector } from './RiderProfileSelector'
-import { TransportMode } from '@/lib/types'
+import { TransportMode, FavoriteRoute } from '@/lib/types'
 import { CityDef } from '@/lib/constants'
 import { useFavorites } from '@/hooks/use-favorites'
 import { useRecentSearches } from '@/hooks/use-recent-searches'
@@ -39,9 +39,12 @@ interface SearchPanelProps {
   // hence async), so this panel can show an inline "not running right now"
   // message on a miss without page.tsx needing to own that UI state.
   onSelectLine?: (mode: string, line: string, lat: number, lng: number) => boolean | Promise<boolean>
+  // A saved route picked from the "My routes" menu (outside this panel). Each
+  // pick carries a fresh `key` so re-picking the same route still re-runs it.
+  externalTrip?: { key: number; favorite: FavoriteRoute } | null
 }
 
-export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, wheelchair = false, onWheelchairToggle, onViewStopBoard, onSelectLine }: SearchPanelProps) {
+export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, wheelchair = false, onWheelchairToggle, onViewStopBoard, onSelectLine, externalTrip }: SearchPanelProps) {
   const { t, locale } = useTranslation()
   const [panelMode, setPanelMode] = useState<'plan' | 'board'>('plan')
   const [fromText, setFromText] = useState('')
@@ -96,6 +99,14 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
     setToCoords(to)
     handleSearch(from, to, favorite.fromName, favorite.toName)
   }
+
+  useEffect(() => {
+    if (!externalTrip) return
+    setPanelMode('plan')
+    handleFavoriteClick(externalTrip.favorite)
+    // Only re-run on a new pick, not on every handler identity change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalTrip])
 
   const handleRecentClick = (recent: (typeof recents)[number]) => {
     setFromText(recent.fromName)

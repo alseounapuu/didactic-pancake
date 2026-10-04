@@ -654,7 +654,6 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
       attributionControl: false,
     })
 
-    map.addControl(new maplibregl.NavigationControl(), 'bottom-left')
     map.addControl(
       new maplibregl.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },
