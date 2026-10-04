@@ -204,6 +204,10 @@ const en = {
     open: 'Menu',
     close: 'Close menu',
     myRoutes: 'My routes',
+    settings: 'Settings',
+    history: 'History',
+    favorites: 'Favorites',
+    emptyHistory: 'No history yet. Routes you search will show up here.',
     empty: 'No saved routes yet. Search a trip and tap the star to save it.',
   },
   favorite: {

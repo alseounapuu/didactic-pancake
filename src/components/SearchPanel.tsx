@@ -8,6 +8,7 @@ import { FavoriteChip } from './FavoriteChip'
 import { RecentChip } from './RecentChip'
 import { HomeWorkChip } from './HomeWorkChip'
 import { LanguageSelector } from './LanguageSelector'
+import { MenuButton, MenuSection } from './MenuButton'
 import { RiderProfileSelector } from './RiderProfileSelector'
 import { TransportMode, FavoriteRoute } from '@/lib/types'
 import { CityDef } from '@/lib/constants'
@@ -49,9 +50,11 @@ interface SearchPanelProps {
   // mount-time effect below would silently replay the old favorite pick,
   // overwriting whatever trip the rider was actually looking at.
   onExternalTripConsumed?: () => void
+  // Hamburger menu pick (Settings / My routes); page.tsx renders the drawer.
+  onOpenMenu?: (section: MenuSection) => void
 }
 
-export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, wheelchair = false, onWheelchairToggle, onViewStopBoard, onSelectLine, externalTrip, onExternalTripConsumed }: SearchPanelProps) {
+export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, wheelchair = false, onWheelchairToggle, onViewStopBoard, onSelectLine, externalTrip, onExternalTripConsumed, onOpenMenu }: SearchPanelProps) {
   const { t, locale } = useTranslation()
   const [panelMode, setPanelMode] = useState<'plan' | 'board'>('plan')
   const [fromText, setFromText] = useState('')
@@ -198,7 +201,10 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             </button>
           </div>
         ) : <div />}
-        <LanguageSelector />
+        <div className="flex items-center gap-2">
+          <LanguageSelector />
+          {onOpenMenu && <MenuButton onSelect={onOpenMenu} />}
+        </div>
       </div>
       {panelMode === 'board' && onViewStopBoard ? (
         <div className="flex flex-col gap-1">

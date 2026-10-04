@@ -9,6 +9,48 @@ import { CITIES } from '@/lib/constants'
 
 const AGE_BANDS: RiderCategory[] = ['child', 'youth', 'adult', 'senior']
 
+// The age-band + residency pickers, shared by the dropdown below and the
+// Settings drawer.
+export function RiderProfileFields() {
+  const { t } = useTranslation()
+  const { profile, setAgeBand, setResidentOf } = useRiderProfile()
+
+  return (
+    <>
+     <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">{t('fare.profileTitle')}</div>
+     <div className="grid grid-cols-2 gap-1 mb-3">
+       {AGE_BANDS.map((band) => (
+         <button
+           key={band}
+           type="button"
+           onClick={() => setAgeBand(band)}
+           className={`px-2 py-1.5 rounded-lg text-xs ${
+             band === profile.ageBand
+               ? 'text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/50 font-medium'
+               : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+           }`}
+         >
+           {t(`fare.profile${band[0].toUpperCase()}${band.slice(1)}`)}
+         </button>
+       ))}
+     </div>
+     <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{t('fare.residentOf')}</label>
+     <select
+       value={profile.residentOf || ''}
+       onChange={(e) => setResidentOf(e.target.value || undefined)}
+       className="w-full px-2 py-1.5 rounded-lg text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
+     >
+       <option value="">—</option>
+       {CITIES.map((city) => (
+         <option key={city.id} value={city.id}>
+           {city.name}
+         </option>
+       ))}
+     </select>
+    </>
+  )
+}
+
 // Self-contained like LanguageSelector — reads/writes the rider's fare
 // profile straight from localStorage via useRiderProfile, with no props from
 // SearchPanel/page.tsx. Fare pricing (src/lib/fares/price.ts) reads the same
@@ -16,7 +58,7 @@ const AGE_BANDS: RiderCategory[] = ['child', 'youth', 'adult', 'senior']
 // through the search/plan call chain the way wheelchair mode does.
 export function RiderProfileSelector() {
   const { t } = useTranslation()
-  const { profile, setAgeBand, setResidentOf } = useRiderProfile()
+  const { profile } = useRiderProfile()
   const [expanded, setExpanded] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -45,36 +87,7 @@ export function RiderProfileSelector() {
       </button>
       {expanded && (
         <div className="absolute top-12 right-0 z-50 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 p-3 w-56">
-          <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">{t('fare.profileTitle')}</div>
-          <div className="grid grid-cols-2 gap-1 mb-3">
-            {AGE_BANDS.map((band) => (
-              <button
-                key={band}
-                type="button"
-                onClick={() => setAgeBand(band)}
-                className={`px-2 py-1.5 rounded-lg text-xs ${
-                  band === profile.ageBand
-                    ? 'text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/50 font-medium'
-                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-              >
-                {t(`fare.profile${band[0].toUpperCase()}${band.slice(1)}`)}
-              </button>
-            ))}
-          </div>
-          <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{t('fare.residentOf')}</label>
-          <select
-            value={profile.residentOf || ''}
-            onChange={(e) => setResidentOf(e.target.value || undefined)}
-            className="w-full px-2 py-1.5 rounded-lg text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
-          >
-            <option value="">—</option>
-            {CITIES.map((city) => (
-              <option key={city.id} value={city.id}>
-                {city.name}
-              </option>
-            ))}
-          </select>
+          <RiderProfileFields />
         </div>
       )}
     </div>

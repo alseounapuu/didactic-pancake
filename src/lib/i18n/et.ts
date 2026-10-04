@@ -205,6 +205,10 @@ const et: Dictionary = {
     open: 'Menüü',
     close: 'Sulge menüü',
     myRoutes: 'Minu marsruudid',
+    settings: 'Seaded',
+    history: 'Ajalugu',
+    favorites: 'Lemmikud',
+    emptyHistory: 'Ajalugu pole veel. Otsitud marsruudid ilmuvad siia.',
     empty: 'Salvestatud marsruute pole veel. Otsi sõit ja salvesta see tähega.',
   },
   favorite: {
