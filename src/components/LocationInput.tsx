@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useGeocode, GeoResult } from '@/hooks/use-geocode'
 import { useTranslation } from '@/lib/i18n/context'
+import { isLocationEnabled } from '@/hooks/use-location-setting'
 import { evaluateOpeningHours } from '@/lib/opening-hours'
 import { placeCategoryBySlug, PlaceCategory } from '@/lib/place-categories'
 
@@ -170,6 +171,10 @@ export function LocationInput({
   }
 
   const handleUseMyLocation = () => {
+    if (!isLocationEnabled()) {
+      setLocateError(t('location.locationOff'))
+      return
+    }
     if (!navigator.geolocation) {
       setLocateError(t('location.geolocationUnsupported'))
       return

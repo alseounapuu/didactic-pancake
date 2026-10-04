@@ -27,7 +27,7 @@ export function HomeWorkChip({ slot, place, canSet, onSelect, onSet, onClear }: 
         onClick={onSet}
         disabled={!canSet}
         title={canSet ? t('search.saveToAs', { label }) : t('search.enterDestinationThenSave', { label })}
-        className="flex items-center gap-1 border border-dashed border-gray-300 dark:border-gray-600 rounded-2xl px-3 py-1.5 text-xs text-gray-400 dark:text-gray-500 disabled:opacity-50 enabled:hover:border-blue-300 enabled:hover:text-blue-600 dark:enabled:hover:border-blue-600 dark:enabled:hover:text-blue-400 enabled:cursor-pointer"
+        className="flex items-center gap-1 border border-dashed border-gray-300 dark:border-gray-600 rounded-2xl px-3 py-1.5 text-xs text-gray-400 dark:text-gray-500 disabled:opacity-50 enabled:hover:border-blue-300 enabled:hover:text-blue-600 dark:enabled:hover:border-[#00022E] dark:enabled:hover:text-blue-400 enabled:cursor-pointer"
       >
         <Icon size={12} />
         <span>{label}</span>

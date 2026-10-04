@@ -64,6 +64,7 @@ const en = {
     myLocation: 'My location',
     locationDenied: 'Location access denied',
     locationUnavailable: 'Could not get location',
+    locationOff: 'Location is turned off in Settings',
   },
   city: {
     citiesLabel: 'Cities',
@@ -203,7 +204,10 @@ const en = {
   menu: {
     open: 'Menu',
     close: 'Close menu',
+    back: 'Back',
     myRoutes: 'My routes',
+    location: 'Location',
+    allowLocation: 'Allow location',
     settings: 'Settings',
     history: 'History',
     favorites: 'Favorites',

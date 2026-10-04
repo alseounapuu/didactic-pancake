@@ -5,6 +5,7 @@ import { useWakeLock } from '@/hooks/use-wake-lock'
 import { useTranslation } from '@/lib/i18n/context'
 import { RouteLeg } from '@/lib/types'
 import { ridingProgress, RidingProgress } from '@/lib/riding-progress'
+import { isLocationEnabled } from '@/hooks/use-location-setting'
 
 // How often a fix is actually POSTed to /api/rider-report — same value as
 // use-live-share.ts's own MIN_SEND_INTERVAL_MS (not imported: that constant
@@ -75,6 +76,11 @@ export function useRidingMode(leg: RouteLeg | null, onAutoStop: () => void) {
     }
     if (!navigator.geolocation) {
       setError(t('location.geolocationUnsupported'))
+      onAutoStopRef.current()
+      return
+    }
+    if (!isLocationEnabled()) {
+      setError(t('location.locationOff'))
       onAutoStopRef.current()
       return
     }

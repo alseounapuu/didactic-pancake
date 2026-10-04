@@ -268,7 +268,7 @@ function ExpandableLeg({
               onClick={(e) => { e.stopPropagation(); onToggleRiding(leg) }}
               className={`px-1.5 py-0.5 rounded text-xs font-medium ${
                 riding
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-[#00022E] text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
               }`}
             >

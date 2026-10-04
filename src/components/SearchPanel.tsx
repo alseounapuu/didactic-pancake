@@ -6,7 +6,8 @@ import { LocationInput } from './LocationInput'
 import { CitySelector } from './CitySelector'
 import { FavoriteChip } from './FavoriteChip'
 import { HomeWorkChip } from './HomeWorkChip'
-import { MenuButton, MenuSection } from './MenuButton'
+import { MenuButton } from './MenuButton'
+import { isLocationEnabled } from '@/hooks/use-location-setting'
 import { TransportMode, FavoriteRoute } from '@/lib/types'
 import { CityDef } from '@/lib/constants'
 import { useFavorites } from '@/hooks/use-favorites'
@@ -47,8 +48,8 @@ interface SearchPanelProps {
   // mount-time effect below would silently replay the old favorite pick,
   // overwriting whatever trip the rider was actually looking at.
   onExternalTripConsumed?: () => void
-  // Hamburger menu pick (Settings / My routes); page.tsx renders the drawer.
-  onOpenMenu?: (section: MenuSection) => void
+  // Hamburger tap; page.tsx renders the menu drawer.
+  onOpenMenu?: () => void
 }
 
 export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, wheelchair = false, onWheelchairToggle, onViewStopBoard, onSelectLine, externalTrip, onExternalTripConsumed, onOpenMenu }: SearchPanelProps) {
@@ -130,7 +131,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
       handleSearch(fromCoords, { lat: place.lat, lng: place.lng }, fromText, place.name)
       return
     }
-    if (!navigator.geolocation) return
+    if (!navigator.geolocation || !isLocationEnabled()) return
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const coords = { lat: position.coords.latitude, lng: position.coords.longitude }
@@ -175,20 +176,20 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             <button
               type="button"
               onClick={() => setPanelMode('plan')}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'plan' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'plan' ? 'bg-[#00022E] text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
             >
               {t('search.planTrip')}
             </button>
             <button
               type="button"
               onClick={() => setPanelMode('board')}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'board' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'board' ? 'bg-[#00022E] text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
             >
               {t('search.departures')}
             </button>
           </div>
         ) : <div />}
-        {onOpenMenu && <MenuButton onSelect={onOpenMenu} />}
+        {onOpenMenu && <MenuButton onClick={onOpenMenu} />}
       </div>
       {panelMode === 'board' && onViewStopBoard ? (
         <div className="flex flex-col gap-1">
@@ -238,7 +239,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             onClick={handleSwap}
             title={t('search.swap')}
             aria-label={t('search.swap')}
-            className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 z-10 w-7 h-7 rounded-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-md flex items-center justify-center text-gray-500 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-600"
+            className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 z-10 w-7 h-7 rounded-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-md flex items-center justify-center text-gray-500 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-[#00022E]"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0-4-4m4 4-4 4M16 17H4m0 0 4 4m-4-4 4-4" />
@@ -389,7 +390,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                     handleSearch(fromCoords, toCoords, fromText, toText, dateTime, timeMode === 'arrive')
                   }
                 }}
-                className="px-3 py-3 bg-blue-600 text-white rounded-full text-xs font-medium shadow-md"
+                className="px-3 py-3 bg-[#00022E] text-white rounded-full text-xs font-medium shadow-md"
               >
                 {t('search.done')}
               </button>
@@ -415,7 +416,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                 if (fromCoords && toCoords) handleSearch(fromCoords, toCoords, fromText, toText, '', false)
               }
             }}
-            className={`px-4 py-3 rounded-full text-sm shadow-md border ${timeMode !== 'now' && dateTime ? 'bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 font-medium' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+            className={`px-4 py-3 rounded-full text-sm shadow-md border ${timeMode !== 'now' && dateTime ? 'bg-[#00022E] border-[#00022E] text-white font-medium' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
           >
             {timeMode === 'now' && t('search.departNow')}
             {timeMode === 'depart' && (dateTime
@@ -441,7 +442,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             title={wheelchair ? t('search.wheelchairOn') : t('search.wheelchairOff')}
             aria-label={wheelchair ? t('search.wheelchairOn') : t('search.wheelchairOff')}
             aria-pressed={wheelchair}
-            className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center shadow-md border ${wheelchair ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+            className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center shadow-md border ${wheelchair ? 'bg-[#00022E] border-[#00022E] text-white' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
           >
             <Accessibility size={20} />
           </button>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import { useTranslation } from '@/lib/i18n/context'
+import { isLocationEnabled } from '@/hooks/use-location-setting'
 
 // How often a new watchPosition fix is actually sent to the server —
 // watchPosition itself can fire far more often than that (every couple of
@@ -78,6 +79,10 @@ export function useLiveShare(shareId: string | null, token: string | null) {
     if (!shareId || !token) return
     if (!navigator.geolocation) {
       setError(t('location.geolocationUnsupported'))
+      return
+    }
+    if (!isLocationEnabled()) {
+      setError(t('location.locationOff'))
       return
     }
     setError(null)
