@@ -42,9 +42,16 @@ interface SearchPanelProps {
   // A saved route picked from the "My routes" menu (outside this panel). Each
   // pick carries a fresh `key` so re-picking the same route still re-runs it.
   externalTrip?: { key: number; favorite: FavoriteRoute } | null
+  // Called once externalTrip has been applied, so page.tsx can clear it back
+  // to null. Without this, the stale {key, favorite} would still be sitting
+  // in page.tsx's state the next time this panel mounts (it's conditionally
+  // unmounted/remounted whenever a route gets selected/deselected) and the
+  // mount-time effect below would silently replay the old favorite pick,
+  // overwriting whatever trip the rider was actually looking at.
+  onExternalTripConsumed?: () => void
 }
 
-export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, wheelchair = false, onWheelchairToggle, onViewStopBoard, onSelectLine, externalTrip }: SearchPanelProps) {
+export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, wheelchair = false, onWheelchairToggle, onViewStopBoard, onSelectLine, externalTrip, onExternalTripConsumed }: SearchPanelProps) {
   const { t, locale } = useTranslation()
   const [panelMode, setPanelMode] = useState<'plan' | 'board'>('plan')
   const [fromText, setFromText] = useState('')
@@ -104,6 +111,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
     if (!externalTrip) return
     setPanelMode('plan')
     handleFavoriteClick(externalTrip.favorite)
+    onExternalTripConsumed?.()
     // Only re-run on a new pick, not on every handler identity change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalTrip])
