@@ -97,7 +97,7 @@ function HomeContent() {
   const [showIssues, setShowIssues] = useState(false)
   const [showNearby, setShowNearby] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
-  // Left-half menu drawer (menu / Settings / My routes), opened from the
+  // Right-half menu drawer (menu / Settings / My routes), opened from the
   // hamburger button in the search panel's top right; a My routes pick is handed to SearchPanel via externalTrip so its From/To
   // fields fill in and the search runs exactly like tapping a favorite chip.
   const [menuSection, setMenuSection] = useState<MenuSection | null>(null)

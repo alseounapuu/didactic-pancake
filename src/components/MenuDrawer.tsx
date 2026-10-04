@@ -12,7 +12,7 @@ interface MenuDrawerProps {
   children: ReactNode
 }
 
-// Left-half slide-in shell shared by the menu sections. The rest of the
+// Right-half slide-in shell shared by the menu sections. The rest of the
 // screen is a transparent backdrop so a tap anywhere on the map closes it.
 export function MenuDrawer({ title, onClose, onBack, children }: MenuDrawerProps) {
   const { t } = useTranslation()
@@ -22,7 +22,7 @@ export function MenuDrawer({ title, onClose, onBack, children }: MenuDrawerProps
       <div className="fixed inset-0 z-[55]" onClick={onClose} aria-hidden="true" />
       <nav
         aria-label={title}
-        className="fixed inset-y-0 left-0 z-[56] w-1/2 min-w-[14rem] max-w-sm bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl flex flex-col"
+        className="fixed inset-y-0 right-0 z-[56] w-1/2 min-w-[14rem] max-w-sm bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl flex flex-col"
       >
         <div className="flex items-center justify-between px-4 py-3 bg-[#00022E] text-white shrink-0">
           <div className="flex items-center gap-1 min-w-0">
