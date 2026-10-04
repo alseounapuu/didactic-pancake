@@ -5,10 +5,8 @@ import { Star, Accessibility } from 'lucide-react'
 import { LocationInput } from './LocationInput'
 import { CitySelector } from './CitySelector'
 import { FavoriteChip } from './FavoriteChip'
-import { RecentChip } from './RecentChip'
 import { HomeWorkChip } from './HomeWorkChip'
-import { LanguageSelector } from './LanguageSelector'
-import { RiderProfileSelector } from './RiderProfileSelector'
+import { MenuButton, MenuSection } from './MenuButton'
 import { TransportMode, FavoriteRoute } from '@/lib/types'
 import { CityDef } from '@/lib/constants'
 import { useFavorites } from '@/hooks/use-favorites'
@@ -49,9 +47,11 @@ interface SearchPanelProps {
   // mount-time effect below would silently replay the old favorite pick,
   // overwriting whatever trip the rider was actually looking at.
   onExternalTripConsumed?: () => void
+  // Hamburger menu pick (Settings / My routes); page.tsx renders the drawer.
+  onOpenMenu?: (section: MenuSection) => void
 }
 
-export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, wheelchair = false, onWheelchairToggle, onViewStopBoard, onSelectLine, externalTrip, onExternalTripConsumed }: SearchPanelProps) {
+export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, wheelchair = false, onWheelchairToggle, onViewStopBoard, onSelectLine, externalTrip, onExternalTripConsumed, onOpenMenu }: SearchPanelProps) {
   const { t, locale } = useTranslation()
   const [panelMode, setPanelMode] = useState<'plan' | 'board'>('plan')
   const [fromText, setFromText] = useState('')
@@ -66,7 +66,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
   // onSelectLine) — cleared on the next successful pick or a fresh search.
   const [lineNotRunning, setLineNotRunning] = useState<string | null>(null)
   const { favorites, addFavorite, removeFavorite, findFavorite } = useFavorites()
-  const { recents, logSearch, removeRecent } = useRecentSearches()
+  const { logSearch } = useRecentSearches()
   const { places: homeWork, setPlace: setHomeWork, clearPlace: clearHomeWork } = useHomeWork()
 
   const handleSearch = (
@@ -115,16 +115,6 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
     // Only re-run on a new pick, not on every handler identity change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalTrip])
-
-  const handleRecentClick = (recent: (typeof recents)[number]) => {
-    setFromText(recent.fromName)
-    setToText(recent.toName)
-    const from = { lat: recent.fromLat, lng: recent.fromLng }
-    const to = { lat: recent.toLat, lng: recent.toLng }
-    setFromCoords(from)
-    setToCoords(to)
-    handleSearch(from, to, recent.fromName, recent.toName)
-  }
 
   // Tapping a set Home/Work chip fills "To" with it. If "From" is already
   // picked, search right away; otherwise fall back to the rider's current
@@ -198,7 +188,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             </button>
           </div>
         ) : <div />}
-        <LanguageSelector />
+        {onOpenMenu && <MenuButton onSelect={onOpenMenu} />}
       </div>
       {panelMode === 'board' && onViewStopBoard ? (
         <div className="flex flex-col gap-1">
@@ -320,7 +310,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           </div>
         )}
       </div>
-      {!hasInput && (homeWork.home || homeWork.work || favorites.length > 0 || recents.length > 0) && (
+      {!hasInput && (homeWork.home || homeWork.work || favorites.length > 0) && (
         <div className="flex flex-wrap gap-1.5">
           {homeWork.home && (
             <HomeWorkChip
@@ -350,16 +340,6 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               onRemove={() => removeFavorite(favorite.id)}
             />
           ))}
-          {recents
-            .filter((recent) => !findFavorite(recent.fromLat, recent.fromLng, recent.toLat, recent.toLng))
-            .map((recent) => (
-              <RecentChip
-                key={recent.id}
-                recent={recent}
-                onSelect={() => handleRecentClick(recent)}
-                onRemove={() => removeRecent(recent.id)}
-              />
-            ))}
         </div>
       )}
       {/* Once a destination is picked, offer to save it as Home/Work right
@@ -466,7 +446,6 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             <Accessibility size={20} />
           </button>
         )}
-        <RiderProfileSelector />
         {activeCities && onCityToggle && onCountyToggle && onSetAllCities && (
           <CitySelector activeCities={activeCities} onToggle={onCityToggle} onToggleCounty={onCountyToggle} onSetAll={onSetAllCities} />
         )}
