@@ -24,6 +24,33 @@ function SwitchRow({ label, checked, onChange }: { label: string; checked: boole
   )
 }
 
+// On/off switch with a label on each side: "off" label left, "on" label
+// right; the label of the current state is emphasized.
+function LabeledSwitch({ offLabel, onLabel, checked, onChange }: { offLabel: string; onLabel: string; checked: boolean; onChange: (next: boolean) => void }) {
+  const active = 'font-semibold text-gray-900 dark:text-gray-100'
+  const inactive = 'text-gray-400 dark:text-gray-500'
+  return (
+    <div className="flex items-center justify-between gap-2 px-2 py-1.5 text-xs">
+      <button type="button" onClick={() => onChange(false)} className={checked ? inactive : active}>
+        {offLabel}
+      </button>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={`${offLabel} / ${onLabel}`}
+        onClick={() => onChange(!checked)}
+        className={`relative w-9 h-5 rounded-full shrink-0 transition-colors ${checked ? 'bg-[#00022E]' : 'bg-gray-300 dark:bg-gray-600'}`}
+      >
+        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${checked ? 'left-[1.125rem]' : 'left-0.5'}`} />
+      </button>
+      <button type="button" onClick={() => onChange(true)} className={checked ? active : inactive}>
+        {onLabel}
+      </button>
+    </div>
+  )
+}
+
 function SectionTitle({ children }: { children: string }) {
   return <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">{children}</div>
 }
@@ -62,7 +89,7 @@ export function SettingsMenu({ onClose, onBack, wheelchair, onWheelchairToggle }
         </div>
         <div>
           <SectionTitle>{t('menu.vehicles')}</SectionTitle>
-          <SwitchRow label={t('menu.showAllVehicles')} checked={showAll} onChange={setShowAll} />
+          <LabeledSwitch offLabel={t('menu.myVehicles')} onLabel={t('menu.allVehicles')} checked={showAll} onChange={setShowAll} />
           {!showAll && <p className="px-2 mt-1 text-xs text-gray-500 dark:text-gray-400">{t('menu.showAllVehiclesHint')}</p>}
         </div>
       </div>
