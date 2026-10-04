@@ -64,6 +64,7 @@ const en = {
     myLocation: 'My location',
     locationDenied: 'Location access denied',
     locationUnavailable: 'Could not get location',
+    locationOff: 'Location is turned off in Settings',
   },
   city: {
     citiesLabel: 'Cities',
@@ -203,7 +204,15 @@ const en = {
   menu: {
     open: 'Menu',
     close: 'Close menu',
+    back: 'Back',
     myRoutes: 'My routes',
+    wheelchair: 'Wheelchair accessible routes',
+    vehicles: 'Vehicles',
+    myVehicles: 'My vehicles',
+    allVehicles: 'All vehicles',
+    showAllVehiclesHint: 'Off: only the vehicle and route you searched for or tapped',
+    location: 'Location',
+    allowLocation: 'Allow location',
     settings: 'Settings',
     history: 'History',
     favorites: 'Favorites',

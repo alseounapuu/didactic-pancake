@@ -65,6 +65,7 @@ const ru: Dictionary = {
     myLocation: 'Моё местоположение',
     locationDenied: 'Доступ к местоположению запрещён',
     locationUnavailable: 'Не удалось определить местоположение',
+    locationOff: 'Местоположение отключено в настройках',
   },
   city: {
     citiesLabel: 'Города',
@@ -204,7 +205,15 @@ const ru: Dictionary = {
   menu: {
     open: 'Меню',
     close: 'Закрыть меню',
+    back: 'Назад',
     myRoutes: 'Мои маршруты',
+    wheelchair: 'Маршруты для инвалидных колясок',
+    vehicles: 'Транспорт',
+    myVehicles: 'Мой транспорт',
+    allVehicles: 'Весь транспорт',
+    showAllVehiclesHint: 'Выкл.: только найденный или выбранный транспорт и его маршрут',
+    location: 'Местоположение',
+    allowLocation: 'Разрешить местоположение',
     settings: 'Настройки',
     history: 'История',
     favorites: 'Избранное',

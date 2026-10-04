@@ -65,6 +65,7 @@ const et: Dictionary = {
     myLocation: 'Minu asukoht',
     locationDenied: 'Asukoha kasutamine on keelatud',
     locationUnavailable: 'Asukohta ei õnnestunud tuvastada',
+    locationOff: 'Asukoht on seadetes välja lülitatud',
   },
   city: {
     citiesLabel: 'Linnad',
@@ -204,7 +205,15 @@ const et: Dictionary = {
   menu: {
     open: 'Menüü',
     close: 'Sulge menüü',
+    back: 'Tagasi',
     myRoutes: 'Minu marsruudid',
+    wheelchair: 'Ratastooliga ligipääsetavad marsruudid',
+    vehicles: 'Sõidukid',
+    myVehicles: 'Minu sõidukid',
+    allVehicles: 'Kõik sõidukid',
+    showAllVehiclesHint: 'Väljas: ainult otsitud või valitud sõiduk ja selle marsruut',
+    location: 'Asukoht',
+    allowLocation: 'Luba asukoht',
     settings: 'Seaded',
     history: 'Ajalugu',
     favorites: 'Lemmikud',

@@ -78,14 +78,14 @@ export function FilterButton({ active, armedLine, onToggle, onOpenPanel }: Filte
       title={label}
       className={`relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center border-2 backdrop-blur-xl ${
         active
-          ? 'bg-blue-100/90 dark:bg-blue-900/80 border-blue-500'
+          ? 'bg-[#00022E] border-[#00022E]'
           : 'bg-white/85 dark:bg-gray-900/80 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
       }`}
     >
       <ListFilter
         size={22}
         strokeWidth={2}
-        className={active ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-300'}
+        className={active ? 'text-white' : 'text-gray-600 dark:text-gray-300'}
       />
       {armedLine && (
         <span className="absolute -top-1 -right-1 bg-gray-600 dark:bg-gray-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">

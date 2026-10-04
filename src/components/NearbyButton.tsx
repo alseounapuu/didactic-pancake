@@ -17,7 +17,7 @@ export function NearbyButton({ active, onClick }: NearbyButtonProps) {
       aria-label={active ? t('nearbyButton.hide') : t('nearbyButton.show')}
       className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center border-2 backdrop-blur-xl ${
         active
-          ? 'bg-blue-100/90 dark:bg-blue-900/80 border-blue-500'
+          ? 'bg-[#00022E] border-[#00022E]'
           : 'bg-white/85 dark:bg-gray-900/80 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
       }`}
       title={active ? t('nearbyButton.hide') : t('nearbyButton.show')}
@@ -25,7 +25,7 @@ export function NearbyButton({ active, onClick }: NearbyButtonProps) {
       <LocateFixed
         size={22}
         strokeWidth={2}
-        className={active ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-300'}
+        className={active ? 'text-white' : 'text-gray-600 dark:text-gray-300'}
       />
     </button>
   )

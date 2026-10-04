@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react'
 import { useTranslation } from '@/lib/i18n/context'
+import { isLocationEnabled } from '@/hooks/use-location-setting'
 
 export interface GeoPosition {
   lat: number
@@ -19,6 +20,10 @@ export function useGeolocation() {
   const [loading, setLoading] = useState(false)
 
   const request = useCallback(() => {
+    if (!isLocationEnabled()) {
+      setError(t('location.locationOff'))
+      return
+    }
     if (!navigator.geolocation) {
       setError(t('location.geolocationUnsupported'))
       return

@@ -14,7 +14,7 @@ import { NearbyButton } from '@/components/NearbyButton'
 import { NearbyPanel } from '@/components/NearbyPanel'
 import { FilterButton } from '@/components/FilterButton'
 import { FilterPanel } from '@/components/FilterPanel'
-import { MenuSection } from '@/components/MenuButton'
+import { MainMenu, MenuSection } from '@/components/MainMenu'
 import { SettingsMenu } from '@/components/SettingsMenu'
 import { MyRoutesMenu } from '@/components/MyRoutesMenu'
 import { DelayToast } from '@/components/DelayToast'
@@ -30,6 +30,7 @@ import { OVERVIEW_THRESHOLD_SEC, findVehicleForLeg, distanceMeters } from '@/lib
 import { resolveTravellerPosition } from '@/lib/traveller-position'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { useVehicles } from '@/hooks/use-vehicles'
+import { useShowAllVehicles } from '@/hooks/use-show-all-vehicles'
 import { useRoutePlan } from '@/hooks/use-route-plan'
 import { useAlerts } from '@/hooks/use-alerts'
 import { useDelays } from '@/hooks/use-delays'
@@ -67,6 +68,7 @@ function HomeContent() {
   // alternatives" re-search below (which calls the plan hook directly) can
   // still honor it.
   const [wheelchair, setWheelchair] = useState(false)
+  const { showAll: showAllVehicles } = useShowAllVehicles()
   // Set when a marker click can't produce a route shape at all (see
   // MapView's onRouteShapeError) — otherwise that click just silently does
   // nothing, indistinguishable from the tap not registering.
@@ -97,8 +99,8 @@ function HomeContent() {
   const [showIssues, setShowIssues] = useState(false)
   const [showNearby, setShowNearby] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
-  // Left-half menu drawer (Settings / My routes), opened from the hamburger
-  // button next to the language selector; a My routes pick is handed to SearchPanel via externalTrip so its From/To
+  // Right-half menu drawer (menu / Settings / My routes), opened from the
+  // hamburger button in the search panel's top right; a My routes pick is handed to SearchPanel via externalTrip so its From/To
   // fields fill in and the search runs exactly like tapping a favorite chip.
   const [menuSection, setMenuSection] = useState<MenuSection | null>(null)
   const [externalTrip, setExternalTrip] = useState<{ key: number; favorite: FavoriteRoute } | null>(null)
@@ -648,7 +650,13 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
   // Applied after extraMapVehicle is merged in -- a line filter matching that
   // vehicle should still keep it visible, same as any other vehicle on the
   // map.
-  const filteredMapVehicles = useMemo(() => applyLineFilter(mapVehicles, lineFilter), [mapVehicles, lineFilter])
+  const filteredMapVehicles = useMemo(() => {
+    const filtered = applyLineFilter(mapVehicles, lineFilter)
+    if (showAllVehicles || !filtered) return filtered
+    // "Show all vehicles" is off: keep only the tapped vehicle and the
+    // vehicles running the selected route's legs.
+    return filtered.filter((v) => v.id === selectedVehicle?.id || journeyTripIds.has(v.id))
+  }, [mapVehicles, lineFilter, showAllVehicles, selectedVehicle?.id, journeyTripIds])
 
   return (
     <main className="h-dvh relative overflow-hidden">
@@ -709,7 +717,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           className="absolute top-3 left-3 right-11 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-30 sm:w-[88%] sm:max-w-lg pointer-events-none"
         >
           <div className="pointer-events-auto">
-            <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} wheelchair={wheelchair} onWheelchairToggle={() => setWheelchair((w) => !w)} onViewStopBoard={handleViewStopBoard} onSelectLine={handleSelectLine} externalTrip={externalTrip} onExternalTripConsumed={() => setExternalTrip(null)} onOpenMenu={setMenuSection} />
+            <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} wheelchair={wheelchair} onWheelchairToggle={() => setWheelchair((w) => !w)} onViewStopBoard={handleViewStopBoard} onSelectLine={handleSelectLine} externalTrip={externalTrip} onExternalTripConsumed={() => setExternalTrip(null)} onOpenMenu={() => setMenuSection('menu')} />
           </div>
           {/* Vehicle markers on the map are otherwise silent about their own
               data source going down — a rider watching a frozen or empty map
@@ -925,6 +933,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         </div>
       )}
 
+      {menuSection === 'menu' && <MainMenu onSelect={setMenuSection} onClose={() => setMenuSection(null)} />}
       {menuSection === 'myRoutes' && (
         <MyRoutesMenu
           onSelect={(favorite) => {
@@ -932,9 +941,10 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
             setMenuSection(null)
           }}
           onClose={() => setMenuSection(null)}
+          onBack={() => setMenuSection('menu')}
         />
       )}
-      {menuSection === 'settings' && <SettingsMenu onClose={() => setMenuSection(null)} />}
+      {menuSection === 'settings' && <SettingsMenu onClose={() => setMenuSection(null)} onBack={() => setMenuSection('menu')} wheelchair={wheelchair} onWheelchairToggle={() => setWheelchair((w) => !w)} />}
 
       {/* Logo - bottom center */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-60">

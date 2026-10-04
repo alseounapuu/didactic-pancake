@@ -11,6 +11,7 @@ import { MenuDrawer } from './MenuDrawer'
 interface MyRoutesMenuProps {
   onSelect: (trip: FavoriteRoute) => void
   onClose: () => void
+  onBack: () => void
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -24,7 +25,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 // "My routes": saved favorites plus the auto-logged search history (the same
 // trips shown as chips under the search bar).
-export function MyRoutesMenu({ onSelect, onClose }: MyRoutesMenuProps) {
+export function MyRoutesMenu({ onSelect, onClose, onBack }: MyRoutesMenuProps) {
   const { t } = useTranslation()
   const { favorites, removeFavorite } = useFavorites()
   const { recents, removeRecent } = useRecentSearches()
@@ -57,7 +58,7 @@ export function MyRoutesMenu({ onSelect, onClose }: MyRoutesMenuProps) {
   const listClass = 'divide-y divide-gray-100 dark:divide-gray-700'
 
   return (
-    <MenuDrawer title={t('menu.myRoutes')} onClose={onClose}>
+    <MenuDrawer title={t('menu.myRoutes')} onClose={onClose} onBack={onBack}>
       <Section title={t('menu.favorites')}>
         {favorites.length === 0 ? (
           empty(t('menu.empty'))

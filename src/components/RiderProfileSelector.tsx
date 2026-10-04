@@ -25,7 +25,7 @@ export function RiderProfileFields() {
            onClick={() => setAgeBand(band)}
            className={`px-2 py-1.5 rounded-lg text-xs ${
              band === profile.ageBand
-               ? 'text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/50 font-medium'
+               ? 'text-white bg-[#00022E] font-medium'
                : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
            }`}
          >

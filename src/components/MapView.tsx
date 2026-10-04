@@ -8,6 +8,7 @@ import { VehiclePosition, TransportMode, RouteResult, ServiceAlert, TripStopInfo
 import { decodePolyline } from '@/lib/decode-polyline'
 import { formatAgo } from '@/lib/format-ago'
 import { useTranslation } from '@/lib/i18n/context'
+import { isLocationEnabled, useLocationSetting } from '@/hooks/use-location-setting'
 
 function formatSecondsToTime(seconds: number): string {
   const h = Math.floor(seconds / 3600)
@@ -258,6 +259,9 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
   })
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
+  const geolocateRef = useRef<maplibregl.GeolocateControl | null>(null)
+  const geolocateAddedRef = useRef(false)
+  const { enabled: locationEnabled } = useLocationSetting()
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
   const arrowMarkersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
   // How many features were last fed into the cluster source's setData() —
@@ -642,6 +646,21 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
     })
   }, [selectedVehicle, vehicles])
 
+  // Settings location switch: hide the map's locate button (and stop any
+  // active tracking) while location is off, bring it back when turned on.
+  useEffect(() => {
+    const map = mapRef.current
+    const geolocate = geolocateRef.current
+    if (!map || !geolocate) return
+    if (locationEnabled && !geolocateAddedRef.current) {
+      map.addControl(geolocate, 'bottom-left')
+      geolocateAddedRef.current = true
+    } else if (!locationEnabled && geolocateAddedRef.current) {
+      map.removeControl(geolocate)
+      geolocateAddedRef.current = false
+    }
+  }, [locationEnabled])
+
   // Initialize map
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -654,13 +673,15 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
       attributionControl: false,
     })
 
-    map.addControl(
-      new maplibregl.GeolocateControl({
-        positionOptions: { enableHighAccuracy: true },
-        trackUserLocation: true,
-      }),
-      'bottom-left',
-    )
+    const geolocate = new maplibregl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: true,
+    })
+    geolocateRef.current = geolocate
+    if (isLocationEnabled()) {
+      map.addControl(geolocate, 'bottom-left')
+      geolocateAddedRef.current = true
+    }
 
     map.on('load', () => {
       mapReadyRef.current = true
