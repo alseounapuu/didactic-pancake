@@ -228,7 +228,7 @@ const en = {
     liveTitle: 'Live vehicle positions',
     live1: 'Tallinn public transport: live GPS feed from Tallinn City Transport (transport.tallinn.ee).',
     live2: 'Elron trains: live train positions from a public GTFS-realtime feed of Elron data.',
-    live3: 'Ship positions (AIS): Fintraffic / digitraffic.fi, licensed CC 4.0 BY. Passenger ships and ferries near Estonia, live positions only (no timetables).',
+    live3: 'Ship positions (AIS) and ferry port-call times: Fintraffic / digitraffic.fi, licensed CC 4.0 BY. Passenger ships and ferries near Estonia; Tallinn–Helsinki sailing times are partly estimated.',
     scheduleTitle: 'Timetables',
     schedule1: 'Estonian public transport timetables (GTFS), via the unified Estonia feed.',
     schedule2: 'Elron train timetables (GTFS).',

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { TransportMode } from '@/lib/types'
-import { planTrip } from '@/lib/plan-query'
+import { planWithFerries } from '@/lib/ferry-plan'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   const [fromLat, fromLng] = fromPlace.split(',').map(Number)
   const [toLat, toLng] = toPlace.split(',').map(Number)
 
-  const result = await planTrip(fromLat, fromLng, toLat, toLng, {
+  const result = await planWithFerries(fromLat, fromLng, toLat, toLng, {
     modes: modesParam ? (modesParam.split(',') as TransportMode[]) : undefined,
     dateTime: dateTime || undefined,
     arriveBy: arriveBy || undefined,

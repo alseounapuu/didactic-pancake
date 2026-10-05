@@ -229,7 +229,7 @@ const et: Dictionary = {
     liveTitle: 'Sõidukite asukohad reaalajas',
     live1: 'Tallinna ühistransport: Tallinna Linnatranspordi reaalajas GPS-andmevoog (transport.tallinn.ee).',
     live2: 'Elroni rongid: rongide asukohad avalikust Elroni andmete GTFS-realtime voost.',
-    live3: 'Laevade asukohad (AIS): Fintraffic / digitraffic.fi, litsents CC 4.0 BY. Reisilaevad ja praamid Eesti ümbruses, ainult asukohad reaalajas (sõiduplaanideta).',
+    live3: 'Laevade asukohad (AIS) ja praamide sadamakülastuste ajad: Fintraffic / digitraffic.fi, litsents CC 4.0 BY. Reisilaevad ja praamid Eesti ümbruses; Tallinna–Helsingi reiside ajad on osaliselt hinnangulised.',
     scheduleTitle: 'Sõiduplaanid',
     schedule1: 'Eesti ühistranspordi sõiduplaanid (GTFS), Eesti ühtse andmevoo kaudu.',
     schedule2: 'Elroni rongide sõiduplaanid (GTFS).',
