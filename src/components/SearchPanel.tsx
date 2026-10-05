@@ -8,7 +8,7 @@ import { FavoriteChip } from './FavoriteChip'
 import { HomeWorkChip } from './HomeWorkChip'
 import { MenuButton } from './MenuButton'
 import { isLocationEnabled } from '@/hooks/use-location-setting'
-import { TransportMode, FavoriteRoute } from '@/lib/types'
+import { TransportMode, FavoriteRoute, PickedPoints } from '@/lib/types'
 import { CityDef } from '@/lib/constants'
 import { useFavorites } from '@/hooks/use-favorites'
 import { useRecentSearches } from '@/hooks/use-recent-searches'
@@ -49,9 +49,12 @@ interface SearchPanelProps {
   onExternalTripConsumed?: () => void
   // Hamburger tap; page.tsx renders the menu drawer.
   onOpenMenu?: () => void
+  // Reports the currently picked From/To coordinates (null when empty) so the
+  // map can show them as points before any search runs.
+  onPointsChange?: (points: PickedPoints) => void
 }
 
-export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, wheelchair = false, onViewStopBoard, onSelectLine, externalTrip, onExternalTripConsumed, onOpenMenu }: SearchPanelProps) {
+export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, wheelchair = false, onViewStopBoard, onSelectLine, externalTrip, onExternalTripConsumed, onOpenMenu, onPointsChange }: SearchPanelProps) {
   const { t, locale } = useTranslation()
   const [panelMode, setPanelMode] = useState<'plan' | 'board'>('plan')
   const [fromText, setFromText] = useState('')
@@ -148,6 +151,12 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
   // wheelchair mode -- from here or from Settings -- can change which
   // itinerary comes back first even without touching from/to. Re-run the
   // search right away, same "act immediately" pattern as the time-mode button.
+  useEffect(() => {
+    onPointsChange?.({ from: fromCoords, to: toCoords })
+    // Only when the picked coordinates change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromCoords, toCoords])
+
   const prevWheelchairRef = useRef(wheelchair)
   useEffect(() => {
     if (prevWheelchairRef.current === wheelchair) return

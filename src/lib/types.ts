@@ -448,3 +448,10 @@ export interface ItineraryConditions {
   totalMinSeconds: number
   totalMaxSeconds: number
 }
+
+// From/To places picked in the search panel but not yet searched — shown on
+// the map as A/B points straight away.
+export interface PickedPoints {
+  from: { lat: number; lng: number } | null
+  to: { lat: number; lng: number } | null
+}

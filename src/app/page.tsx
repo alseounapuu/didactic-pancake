@@ -21,7 +21,7 @@ import { DelayToast } from '@/components/DelayToast'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TimetablePanel } from '@/components/TimetablePanel'
 import { StopBoard, StopBoardTarget } from '@/components/StopBoard'
-import { FavoriteRoute, TransportMode, VehiclePosition, ServiceAlert, StopDeparture, SharePosition, RouteLeg } from '@/lib/types'
+import { FavoriteRoute, PickedPoints, TransportMode, VehiclePosition, ServiceAlert, StopDeparture, SharePosition, RouteLeg } from '@/lib/types'
 import { RidingPanel } from '@/components/RidingPanel'
 import { useRidingMode } from '@/hooks/use-riding-mode'
 import { useDepartureAlert } from '@/hooks/use-departure-alert'
@@ -68,6 +68,7 @@ function HomeContent() {
   // alternatives" re-search below (which calls the plan hook directly) can
   // still honor it.
   const [wheelchair, setWheelchair] = useState(false)
+  const [pickedPoints, setPickedPoints] = useState<PickedPoints>({ from: null, to: null })
   const { showAll: showAllVehicles } = useShowAllVehicles()
   // Set when a marker click can't produce a route shape at all (see
   // MapView's onRouteShapeError) — otherwise that click just silently does
@@ -672,6 +673,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           vehicles={filteredMapVehicles}
           activeModes={activeModes}
           selectedRoute={selectedRoute}
+          pickedPoints={pickedPoints}
           journeyVehicles={journeyVehicles}
           travellerPosition={travellerPosition}
           selectedVehicle={selectedVehicle}
@@ -717,7 +719,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           className="absolute top-3 left-3 right-11 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-30 sm:w-[88%] sm:max-w-lg pointer-events-none"
         >
           <div className="pointer-events-auto">
-            <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} wheelchair={wheelchair} onViewStopBoard={handleViewStopBoard} onSelectLine={handleSelectLine} externalTrip={externalTrip} onExternalTripConsumed={() => setExternalTrip(null)} onOpenMenu={() => setMenuSection('menu')} />
+            <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} wheelchair={wheelchair} onViewStopBoard={handleViewStopBoard} onSelectLine={handleSelectLine} externalTrip={externalTrip} onExternalTripConsumed={() => setExternalTrip(null)} onOpenMenu={() => setMenuSection('menu')} onPointsChange={setPickedPoints} />
           </div>
           {/* Vehicle markers on the map are otherwise silent about their own
               data source going down — a rider watching a frozen or empty map
