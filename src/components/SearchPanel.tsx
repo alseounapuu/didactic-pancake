@@ -198,14 +198,14 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             <button
               type="button"
               onClick={() => setPanelMode('plan')}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'plan' ? 'bg-[#051650] text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
+              className={`px-3 py-1.5 rounded-full border-2 text-xs font-medium ${panelMode === 'plan' ? 'bg-[#051650] border-[#DC6601] text-white' : 'border-transparent text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
             >
               {t('search.planTrip')}
             </button>
             <button
               type="button"
               onClick={() => setPanelMode('board')}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'board' ? 'bg-[#051650] text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
+              className={`px-3 py-1.5 rounded-full border-2 text-xs font-medium ${panelMode === 'board' ? 'bg-[#051650] border-[#DC6601] text-white' : 'border-transparent text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
             >
               {t('search.departures')}
             </button>

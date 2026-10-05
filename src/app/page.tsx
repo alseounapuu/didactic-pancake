@@ -32,6 +32,8 @@ import { resolveTravellerPosition } from '@/lib/traveller-position'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { useVehicles } from '@/hooks/use-vehicles'
 import { useShowAllVehicles } from '@/hooks/use-show-all-vehicles'
+import { useShowShips } from '@/hooks/use-show-ships'
+import { useShips } from '@/hooks/use-ships'
 import { useRoutePlan } from '@/hooks/use-route-plan'
 import { useAlerts } from '@/hooks/use-alerts'
 import { useDelays } from '@/hooks/use-delays'
@@ -71,6 +73,8 @@ function HomeContent() {
   const [wheelchair, setWheelchair] = useState(false)
   const [pickedPoints, setPickedPoints] = useState<PickedPoints>({ from: null, to: null })
   const { showAll: showAllVehicles } = useShowAllVehicles()
+  const { showShips } = useShowShips()
+  const ships = useShips(showShips)
   // Set when a marker click can't produce a route shape at all (see
   // MapView's onRouteShapeError) — otherwise that click just silently does
   // nothing, indistinguishable from the tap not registering.
@@ -675,6 +679,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           activeModes={activeModes}
           selectedRoute={selectedRoute}
           pickedPoints={pickedPoints}
+          ships={showShips && showAllVehicles ? ships : undefined}
           journeyVehicles={journeyVehicles}
           travellerPosition={travellerPosition}
           selectedVehicle={selectedVehicle}
@@ -939,12 +944,12 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
       {menuSection === 'sources' && <SourcesMenu onClose={() => setMenuSection(null)} onBack={() => setMenuSection('menu')} />}
       {menuSection === 'settings' && <SettingsMenu onClose={() => setMenuSection(null)} onBack={() => setMenuSection('menu')} wheelchair={wheelchair} onWheelchairToggle={() => setWheelchair((w) => !w)} />}
 
-      {/* Filter button - bottom left, just above the map's locate control, so
+      {/* Filter button - bottom left, beside the map's locate control and level with the nearby/issues buttons, so
           the bottom-right corner stays clear and the logo is easier to see.
           Same hide conditions as the FAB row, plus while the timetable panel
           occupies this corner. */}
       {!selectedRoute && !resultsSheetVisible && !selectedVehicle && (
-        <div className="absolute bottom-16 left-2.5 z-[45] pointer-events-auto">
+        <div className="absolute bottom-6 left-14 z-[45] pointer-events-auto">
           <FilterButton
             active={!!lineFilter}
             armedLine={armedLine?.line ?? null}

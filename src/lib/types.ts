@@ -455,3 +455,14 @@ export interface PickedPoints {
   from: { lat: number; lng: number } | null
   to: { lat: number; lng: number } | null
 }
+
+// A passenger ship (ferry / cruise ferry) from live AIS data — see src/lib/ships.ts.
+export interface ShipPosition {
+  id: string
+  name: string
+  lat: number
+  lng: number
+  heading: number // degrees, 0 = north
+  speedKnots: number
+  destination: string
+}
