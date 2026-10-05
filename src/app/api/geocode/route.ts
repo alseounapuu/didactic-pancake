@@ -13,6 +13,7 @@ import {
 } from '@/lib/constants'
 import { foldName, tokenize, scoreName, clusterByLocation, nearestCityName, nearestCityPopulation, distanceToNearestActiveCity } from '@/lib/stop-search'
 import { searchPlaces } from '@/lib/places-db'
+import { searchForeignFerryPorts } from '@/lib/ferry-ports'
 import { placeCategoryBySlug, categoryLabel, ACCOMMODATION_CATEGORIES } from '@/lib/place-categories'
 
 // Cache warming flag — set to true once the initial load completes, so
@@ -117,6 +118,9 @@ interface GeoResult {
   // against the rider's own clock rather than the server's, so a rider's
   // "open now" always matches the "now" they're looking at.
   openingHours?: string
+  // Only present for a ferry port outside Estonia (see src/lib/ferry-ports.ts)
+  // — the client shows a ship icon for it.
+  ferryPort?: boolean
   // Internal-only relevance signal, used by the general (stop + place +
   // address) search below to rank all three result kinds against each
   // other instead of always listing stops first — never sent to the client
@@ -698,6 +702,7 @@ export async function GET(request: Request) {
   // Synchronous (local SQLite, not a network call — see searchOsmPlaces),
   // so it doesn't join the Promise.all above; nothing else is waiting on it.
   const placeResults = searchOsmPlaces(query, activeCities, lang)
+  const ferryPortResults = searchForeignFerryPorts(query, lang).map((r) => ({ ...r, ferryPort: true }))
   // Addresses have no relevance score of their own (the external gazetteer
   // just returns its own best-guess order), so score them the same way stop
   // names are scored, against the same query — this is what lets the merge
@@ -724,14 +729,15 @@ export async function GET(request: Request) {
   // — a transit stop is the most likely intent for a transit app, an OSM
   // place beats a bare address next. "Balti jaam" must still resolve to the
   // station itself even if some address happens to score identically.
-  const withKind = [
+  const withKind: (GeoResult & { kind: number })[] = [
     ...stopsCapped.map((r) => ({ ...r, kind: 0 })),
     ...placeResults.map((r) => ({ ...r, kind: 1 })),
+    ...ferryPortResults.map((r) => ({ ...r, kind: 1 })),
     ...scoredAddresses.map((r) => ({ ...r, kind: 2 })),
   ]
   const merged = withKind
     .sort((a, b) => (b.score ?? 0) - (a.score ?? 0) || a.kind - b.kind)
     .slice(0, STOP_SEARCH_MAX_RESULTS)
-    .map(({ name, lat, lng, stopId, placeCategory, placeDetail, openingHours }) => ({ name, lat, lng, stopId, placeCategory, placeDetail, openingHours }))
+    .map(({ name, lat, lng, stopId, placeCategory, placeDetail, openingHours, ferryPort }) => ({ name, lat, lng, stopId, placeCategory, placeDetail, openingHours, ferryPort }))
   return Response.json({ results: merged })
 }
