@@ -17,7 +17,7 @@ function SwitchRow({ label, checked, onChange }: { label: string; checked: boole
       className="w-full flex items-center justify-between gap-3 px-2 py-1.5 rounded-lg text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
     >
       <span className="text-left">{label}</span>
-      <span className={`relative w-9 h-5 rounded-full shrink-0 transition-colors ${checked ? 'bg-[#00022E]' : 'bg-gray-300 dark:bg-gray-600'}`}>
+      <span className={`relative w-9 h-5 rounded-full shrink-0 transition-colors ${checked ? 'bg-[#051650]' : 'bg-gray-300 dark:bg-gray-600'}`}>
         <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${checked ? 'left-[1.125rem]' : 'left-0.5'}`} />
       </span>
     </button>
@@ -40,7 +40,7 @@ function LabeledSwitch({ offLabel, onLabel, checked, onChange }: { offLabel: str
         aria-checked={checked}
         aria-label={`${offLabel} / ${onLabel}`}
         onClick={() => onChange(!checked)}
-        className={`relative w-9 h-5 rounded-full shrink-0 transition-colors ${checked ? 'bg-[#00022E]' : 'bg-gray-300 dark:bg-gray-600'}`}
+        className={`relative w-9 h-5 rounded-full shrink-0 transition-colors ${checked ? 'bg-[#051650]' : 'bg-gray-300 dark:bg-gray-600'}`}
       >
         <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${checked ? 'left-[1.125rem]' : 'left-0.5'}`} />
       </button>

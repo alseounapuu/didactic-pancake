@@ -28,7 +28,7 @@ export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
 
   return (
     <div className="absolute bottom-24 right-4 z-40 w-80 max-h-[60vh] bg-white/85 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-lg flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 bg-[#00022E] text-white shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 bg-[#051650] text-white shrink-0">
         <span className="text-sm font-semibold">{t('nearby.nearYou')}</span>
         <div className="flex items-center gap-1">
           <button

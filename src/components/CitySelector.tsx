@@ -79,7 +79,7 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
                 }}
                 className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${
                   activeCities.length === CITIES.length
-                    ? 'text-white bg-[#00022E]'
+                    ? 'text-white bg-[#051650]'
                     : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
@@ -105,9 +105,9 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
                     onClick={() => onToggleCounty(cities)}
                     className={`text-[11px] font-semibold uppercase tracking-wide px-2 py-1 rounded text-left ${
                       allActive
-                        ? 'text-white bg-[#00022E]'
+                        ? 'text-white bg-[#051650]'
                         : someActive
-                          ? 'text-[#00022E] dark:text-blue-300 bg-[#00022E]/10'
+                          ? 'text-[#051650] dark:text-blue-300 bg-[#051650]/10'
                           : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                     }`}
                   >
@@ -122,7 +122,7 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
                           onClick={() => onToggle(city)}
                           className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border ${
                             active
-                              ? 'text-white bg-[#00022E] border-[#00022E]'
+                              ? 'text-white bg-[#051650] border-[#051650]'
                               : 'text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                           }`}
                         >

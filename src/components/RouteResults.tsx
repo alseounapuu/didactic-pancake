@@ -238,21 +238,21 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
             <button
               type="button"
               onClick={() => setSortBy('duration')}
-              className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'duration' ? 'bg-[#00022E] text-white font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+              className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'duration' ? 'bg-[#051650] text-white font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
             >
               {t('results.fastest')}
             </button>
             <button
               type="button"
               onClick={() => setSortBy('departure')}
-              className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'departure' ? 'bg-[#00022E] text-white font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+              className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'departure' ? 'bg-[#051650] text-white font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
             >
               {t('results.departure')}
             </button>
             <button
               type="button"
               onClick={() => setSortBy('price')}
-              className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'price' ? 'bg-[#00022E] text-white font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+              className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'price' ? 'bg-[#051650] text-white font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
             >
               {t('results.cheapest')}
             </button>
@@ -263,7 +263,7 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
               <button
                 type="button"
                 onClick={() => setSortBy('traffic')}
-                className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'traffic' ? 'bg-[#00022E] text-white font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'traffic' ? 'bg-[#051650] text-white font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
               >
                 {t('results.leastTraffic')}
               </button>
@@ -319,7 +319,7 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
             onClick={() => (liveShare.sharing ? liveShare.stop() : liveShare.start())}
             className={`shrink-0 px-2 py-0.5 rounded-full font-medium ${
               liveShare.sharing
-                ? 'bg-[#00022E] text-white'
+                ? 'bg-[#051650] text-white'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
             }`}
           >
