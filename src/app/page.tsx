@@ -16,6 +16,7 @@ import { FilterButton } from '@/components/FilterButton'
 import { FilterPanel } from '@/components/FilterPanel'
 import { MainMenu, MenuSection } from '@/components/MainMenu'
 import { SettingsMenu } from '@/components/SettingsMenu'
+import { SourcesMenu } from '@/components/SourcesMenu'
 import { MyRoutesMenu } from '@/components/MyRoutesMenu'
 import { DelayToast } from '@/components/DelayToast'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -935,6 +936,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           onBack={() => setMenuSection('menu')}
         />
       )}
+      {menuSection === 'sources' && <SourcesMenu onClose={() => setMenuSection(null)} onBack={() => setMenuSection('menu')} />}
       {menuSection === 'settings' && <SettingsMenu onClose={() => setMenuSection(null)} onBack={() => setMenuSection('menu')} wheelchair={wheelchair} onWheelchairToggle={() => setWheelchair((w) => !w)} />}
 
       {/* Filter button - bottom left, just above the map's locate control, so
