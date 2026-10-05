@@ -911,7 +911,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           bottom-right corner always sits exactly where these FABs float,
           on top of whatever route content is there. */}
       {!selectedRoute && !resultsSheetVisible && !selectedVehicle && (
-        <div className="absolute bottom-6 right-4 z-[45] flex items-center gap-2 pointer-events-auto">
+        <div className="absolute bottom-[3.25rem] right-4 z-[45] flex items-center gap-2 pointer-events-auto">
           <NearbyButton
             active={showNearby}
             onClick={() => {
@@ -948,12 +948,12 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
       {menuSection === 'sources' && <SourcesMenu onClose={() => setMenuSection(null)} onBack={() => setMenuSection('menu')} />}
       {menuSection === 'settings' && <SettingsMenu onClose={() => setMenuSection(null)} onBack={() => setMenuSection('menu')} wheelchair={wheelchair} onWheelchairToggle={() => setWheelchair((w) => !w)} />}
 
-      {/* Filter button - bottom left, beside the map's locate control and level with the nearby/issues buttons, so
+      {/* Filter button - bottom left, at the far left (the map's locate control sits to its right) and level with the nearby/issues buttons, so
           the bottom-right corner stays clear and the logo is easier to see.
           Same hide conditions as the FAB row, plus while the timetable panel
           occupies this corner. */}
       {!selectedRoute && !resultsSheetVisible && !selectedVehicle && (
-        <div className="absolute bottom-6 left-14 z-[45] pointer-events-auto">
+        <div className="absolute bottom-[3.25rem] left-2.5 z-[45] pointer-events-auto">
           <FilterButton
             active={!!lineFilter}
             armedLine={armedLine?.line ?? null}
@@ -967,8 +967,9 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         </div>
       )}
 
-      {/* Logo - bottom center */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-60">
+      {/* Bottom band: dark blue with an orange top line (same as the active
+          Plan trip tab), holding the logo. The buttons above sit on top of it. */}
+      <div className="absolute inset-x-0 bottom-0 h-10 z-20 pointer-events-none bg-[#051650] border-t-2 border-[#DC6601] flex items-center justify-center">
         <Image src={logo3} alt={t('page.logoAlt')} width={80} height={24} className="w-auto" />
       </div>
     </main>
