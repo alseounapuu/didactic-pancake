@@ -1,4 +1,7 @@
-import { ShipPosition } from '@/lib/types'
+import { ShipPosition, TripStopInfo, VehiclePosition } from '@/lib/types'
+import { distanceMeters } from '@/lib/delay'
+import { calcHeading } from '@/lib/shape-geometry'
+import { encodePolyline } from '@/lib/encode-polyline'
 
 // Live ship positions (AIS) from Fintraffic's open Digitraffic Marine API
 // (https://www.digitraffic.fi/en/marine-traffic/, licence CC 4.0 BY). Free,
@@ -107,7 +110,7 @@ export async function fetchShips(now: number = Date.now()): Promise<ShipPosition
     if (lat > ESTONIA_LAT_MAX && !ESTONIA_DESTINATION.test(rawDestination)) continue
     const heading = f.properties.heading >= 0 && f.properties.heading < 360 ? f.properties.heading : f.properties.cog
     ships.push({
-      id: `ship-${f.mmsi}`,
+      id: `ship:${f.mmsi}`,
       name: vessel.name?.trim() || String(f.mmsi),
       lat,
       lng,
@@ -117,4 +120,147 @@ export async function fetchShips(now: number = Date.now()): Promise<ShipPosition
     })
   }
   return ships
+}
+
+// A ship shown like any other vehicle on the map: mode 'ferry', its name as
+// the "line". The ':' in the id marks it as a known trip, so the timetable
+// panel asks /api/trip-stops for it by id (handled by buildShipTrip below).
+export function shipToVehicle(ship: ShipPosition): VehiclePosition {
+  return {
+    id: ship.id,
+    mode: 'ferry',
+    line: ship.name,
+    lat: ship.lat,
+    lng: ship.lng,
+    heading: ship.heading,
+    destination: ship.destination,
+  }
+}
+
+interface Port {
+  name: string
+  lat: number
+  lng: number
+}
+
+// Ports ships name in their AIS destination, by UN/LOCODE and by plain name
+// (matched without diacritics, upper case). Approximate harbour positions.
+const TALLINN: Port = { name: 'Tallinn', lat: 59.444, lng: 24.768 }
+const PALDISKI: Port = { name: 'Paldiski', lat: 59.336, lng: 24.054 }
+const HELSINKI: Port = { name: 'Helsinki', lat: 60.167, lng: 24.956 }
+const STOCKHOLM: Port = { name: 'Stockholm', lat: 59.35, lng: 18.109 }
+const KAPELLSKAR: Port = { name: 'Kapellskär', lat: 59.72, lng: 19.068 }
+const MARIEHAMN: Port = { name: 'Mariehamn', lat: 60.1, lng: 19.933 }
+const MUUGA: Port = { name: 'Muuga', lat: 59.5, lng: 24.965 }
+const VIRTSU: Port = { name: 'Virtsu', lat: 58.574, lng: 23.511 }
+const KUIVASTU: Port = { name: 'Kuivastu', lat: 58.577, lng: 23.396 }
+const HELTERMAA: Port = { name: 'Heltermaa', lat: 58.868, lng: 23.062 }
+const ROHUKULA: Port = { name: 'Rohuküla', lat: 58.917, lng: 23.435 }
+const TURKU: Port = { name: 'Turku', lat: 60.435, lng: 22.21 }
+const PORTS: Record<string, Port> = {
+  EEVAN: TALLINN,
+  EETLL: TALLINN,
+  TALLINN: TALLINN,
+  EEPAS: PALDISKI,
+  EEPLN: PALDISKI,
+  PALDISKI: PALDISKI,
+  FIHEL: HELSINKI,
+  HELSINKI: HELSINKI,
+  SESTO: STOCKHOLM,
+  STOCKHOLM: STOCKHOLM,
+  SEKPS: KAPELLSKAR,
+  KAPELLSKAR: KAPELLSKAR,
+  FIMHQ: MARIEHAMN,
+  MARIEHAMN: MARIEHAMN,
+  EEMUG: MUUGA,
+  MUUGA: MUUGA,
+  EEVIR: VIRTSU,
+  VIRTSU: VIRTSU,
+  EEKUI: KUIVASTU,
+  KUIVASTU: KUIVASTU,
+  EEHLT: HELTERMAA,
+  HELTERMAA: HELTERMAA,
+  EERHK: ROHUKULA,
+  ROHUKULA: ROHUKULA,
+  FITKU: TURKU,
+  TURKU: TURKU,
+}
+
+function foldPortToken(token: string): string {
+  return token
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .trim()
+}
+
+// "EEVAN<>FIHEL", "VIRTSU < > KUIVASTU", "Tallinn-Helsinki" -> ports in order.
+function portsFromDestination(destination: string): Port[] {
+  const ports: Port[] = []
+  for (const token of destination.split(/\s*(?:<\s*[-=]?\s*>|[<>][-=]|[-=][<>]|[<>]|[-↔])\s*/)) {
+    const port = PORTS[foldPortToken(token)]
+    if (port && ports[ports.length - 1] !== port) ports.push(port)
+  }
+  return ports
+}
+
+function bearing(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  return calcHeading(lat1, lng1, lat2, lng2)
+}
+
+function angleDiff(a: number, b: number): number {
+  const d = Math.abs(a - b) % 360
+  return d > 180 ? 360 - d : d
+}
+
+const KNOT_MS = 0.514444
+const NEAR_PORT_M = 1500
+// Below this speed an arrival time would be meaningless (ship at anchor / in port).
+const MIN_ETA_SPEED_KN = 3
+
+// The "trip" of a ship in /api/trip-stops' response shape, so the map's route
+// line + stop dots and the timetable panel work for ships exactly like for a
+// bus: the ports named in its AIS destination, joined by straight lines
+// (approximate — AIS carries no route), with arrival times estimated from
+// distance and current speed.
+export function buildShipTrip(ship: ShipPosition, nowSec: number) {
+  let ports = portsFromDestination(ship.destination)
+  if (ports.length === 0) return null
+  // Which way along the named ports is the ship going?
+  if (ports.length >= 2) {
+    const first = ports[0]
+    const last = ports[ports.length - 1]
+    if (angleDiff(ship.heading, bearing(first.lat, first.lng, last.lat, last.lng)) > 90) ports = [...ports].reverse()
+  }
+  const canEstimate = ship.speedKnots >= MIN_ETA_SPEED_KN
+  const stops: TripStopInfo[] = ports.map((port) => {
+    const dist = distanceMeters(ship.lat, ship.lng, port.lat, port.lng)
+    const ahead = angleDiff(ship.heading, bearing(ship.lat, ship.lng, port.lat, port.lng)) <= 90
+    const status: TripStopInfo['status'] = dist <= NEAR_PORT_M ? 'current' : ahead ? 'upcoming' : 'passed'
+    const offsetSec = canEstimate ? dist / (ship.speedKnots * KNOT_MS) : 0
+    const time = Math.max(0, Math.round(status === 'passed' ? nowSec - offsetSec : nowSec + offsetSec))
+    return {
+      name: port.name,
+      lat: port.lat,
+      lng: port.lng,
+      stopId: 'port:' + port.name,
+      scheduledArrival: time,
+      scheduledDeparture: time,
+      status,
+      ...(canEstimate && status === 'upcoming' ? {} : { noTime: true }),
+    }
+  })
+  const line: [number, number][] = ports.map((p) => [p.lng, p.lat])
+  return {
+    tripId: ship.id,
+    line: ship.name,
+    mode: 'FERRY',
+    stops,
+    currentTimeSeconds: nowSec,
+    geometry: encodePolyline(line),
+  }
+}
+
+export async function findShip(id: string): Promise<ShipPosition | null> {
+  return (await fetchShips()).find((s) => s.id === id) ?? null
 }

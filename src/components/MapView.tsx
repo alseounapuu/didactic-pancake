@@ -4,7 +4,7 @@ import { useRef, useEffect, useCallback } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { TALLINN_CENTER, DEFAULT_ZOOM, MODE_COLORS, CityDef } from '@/lib/constants'
-import { PickedPoints, ShipPosition, VehiclePosition, TransportMode, RouteResult, ServiceAlert, TripStopInfo, TravellerPosition, TravellerSource } from '@/lib/types'
+import { PickedPoints, VehiclePosition, TransportMode, RouteResult, ServiceAlert, TripStopInfo, TravellerPosition, TravellerSource } from '@/lib/types'
 import { decodePolyline } from '@/lib/decode-polyline'
 import { formatAgo } from '@/lib/format-ago'
 import { useTranslation } from '@/lib/i18n/context'
@@ -201,8 +201,6 @@ interface RouteShapePattern {
 }
 
 interface MapViewProps {
-  // Live passenger ships / ferries (AIS); omit to hide them.
-  ships?: ShipPosition[]
   // From/To picked in the search panel; shown as A/B points until a route is selected.
   pickedPoints?: PickedPoints
   vehicles?: VehiclePosition[]
@@ -245,7 +243,7 @@ interface MapViewProps {
   onRouteShapeError?: () => void
 }
 
-export function MapView({ ships, pickedPoints, vehicles, activeModes = [], selectedRoute, journeyVehicles, travellerPosition, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, focusLine, onVehicleClick, onRouteShapeError }: MapViewProps) {
+export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRoute, journeyVehicles, travellerPosition, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, focusLine, onVehicleClick, onRouteShapeError }: MapViewProps) {
   const { t, locale, modeLabel } = useTranslation()
   // Popups/titles are built inside map event closures set up once at mount
   // (see the click/marker-creation effects below), not re-created on every
@@ -277,7 +275,6 @@ export function MapView({ ships, pickedPoints, vehicles, activeModes = [], selec
   const stopMarkersRef = useRef<maplibregl.Marker[]>([])
   const planLayerIdsRef = useRef<string[]>([])
   const planMarkerRef = useRef<maplibregl.Marker[]>([])
-  const shipMarkersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
   const pickedMarkersRef = useRef<{ from?: maplibregl.Marker; to?: maplibregl.Marker }>({})
   const journeyMarkersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
   const journeyVehiclesRef = useRef(journeyVehicles)
@@ -666,44 +663,6 @@ export function MapView({ ships, pickedPoints, vehicles, activeModes = [], selec
       geolocateAddedRef.current = false
     }
   }, [locationEnabled])
-
-  // Ships / ferries: one rotated arrow per ship, updated in place on each poll.
-  useEffect(() => {
-    const map = mapRef.current
-    if (!map) return
-    const markers = shipMarkersRef.current
-    const live = new Set<string>()
-    for (const ship of ships ?? []) {
-      live.add(ship.id)
-      const popupHtml =
-        `<strong>${escapeHtml(ship.name)}</strong>` +
-        (ship.destination ? `<br/>${escapeHtml(ship.destination)}` : '') +
-        `<br/><span style="font-size:11px;color:#6B7280">${Math.round(ship.speedKnots)} kn</span>`
-      const existing = markers.get(ship.id)
-      if (existing) {
-        existing.setLngLat([ship.lng, ship.lat])
-        existing.getPopup()?.setHTML(popupHtml)
-        const arrow = existing.getElement().firstElementChild as HTMLElement | null
-        if (arrow) arrow.style.transform = `rotate(${ship.heading}deg)`
-        continue
-      }
-      const el = document.createElement('div')
-      el.style.cssText = `width:28px;height:28px;border-radius:50%;background:${MODE_COLORS.ferry};border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;cursor:pointer`
-      el.title = ship.name
-      el.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="white" style="transform:rotate(${ship.heading}deg)"><polygon points="12,2 20,21 12,17 4,21"/></svg>`
-      const marker = new maplibregl.Marker({ element: el })
-        .setLngLat([ship.lng, ship.lat])
-        .setPopup(new maplibregl.Popup({ offset: 16 }).setHTML(popupHtml))
-        .addTo(map)
-      markers.set(ship.id, marker)
-    }
-    markers.forEach((marker, id) => {
-      if (!live.has(id)) {
-        marker.remove()
-        markers.delete(id)
-      }
-    })
-  }, [ships])
 
   // From/To points: drop an A/B marker as soon as a place is picked, before
   // any search runs. Once a route is selected the route's own A/B markers

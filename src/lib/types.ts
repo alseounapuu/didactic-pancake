@@ -222,6 +222,9 @@ export interface TripStopInfo {
   // against Elron's own live-map board. Never guess a platform.
   platform?: string
   platformChanged?: boolean
+  // true when no arrival time can be given (ships: AIS has no timetable and
+  // the ship is too slow/still to estimate one) — the panel hides the time.
+  noTime?: boolean
 }
 
 export interface SearchFilters {

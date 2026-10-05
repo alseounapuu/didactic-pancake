@@ -34,6 +34,7 @@ import { useVehicles } from '@/hooks/use-vehicles'
 import { useShowAllVehicles } from '@/hooks/use-show-all-vehicles'
 import { useShowShips } from '@/hooks/use-show-ships'
 import { useShips } from '@/hooks/use-ships'
+import { shipToVehicle } from '@/lib/ships'
 import { useRoutePlan } from '@/hooks/use-route-plan'
 import { useAlerts } from '@/hooks/use-alerts'
 import { useDelays } from '@/hooks/use-delays'
@@ -647,11 +648,15 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
   // found via its nationwide fallback (see extraMapVehicle's own comment)
   // can be entirely missing from it — appending it here is what actually
   // gets that vehicle a marker on the map instead of just a camera move.
+  const shipVehicles = useMemo(() => (showShips && ships ? ships.map(shipToVehicle) : []), [showShips, ships])
   const mapVehicles = useMemo(() => {
-    if (!extraMapVehicle) return vehicleData.data?.vehicles
-    if (vehicleData.data?.vehicles?.some((v) => v.id === extraMapVehicle.id)) return vehicleData.data.vehicles
-    return [...(vehicleData.data?.vehicles || []), extraMapVehicle]
-  }, [vehicleData.data?.vehicles, extraMapVehicle])
+    const base = vehicleData.data?.vehicles
+    if (!base && shipVehicles.length === 0 && !extraMapVehicle) return base
+    const withShips = shipVehicles.length > 0 ? [...(base || []), ...shipVehicles] : base
+    if (!extraMapVehicle) return withShips
+    if (withShips?.some((v) => v.id === extraMapVehicle.id)) return withShips
+    return [...(withShips || []), extraMapVehicle]
+  }, [vehicleData.data?.vehicles, shipVehicles, extraMapVehicle])
 
   // Applied after extraMapVehicle is merged in -- a line filter matching that
   // vehicle should still keep it visible, same as any other vehicle on the
@@ -679,7 +684,6 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           activeModes={activeModes}
           selectedRoute={selectedRoute}
           pickedPoints={pickedPoints}
-          ships={showShips && showAllVehicles ? ships : undefined}
           journeyVehicles={journeyVehicles}
           travellerPosition={travellerPosition}
           selectedVehicle={selectedVehicle}
