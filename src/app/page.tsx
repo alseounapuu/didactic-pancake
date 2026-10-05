@@ -939,12 +939,12 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
       {menuSection === 'sources' && <SourcesMenu onClose={() => setMenuSection(null)} onBack={() => setMenuSection('menu')} />}
       {menuSection === 'settings' && <SettingsMenu onClose={() => setMenuSection(null)} onBack={() => setMenuSection('menu')} wheelchair={wheelchair} onWheelchairToggle={() => setWheelchair((w) => !w)} />}
 
-      {/* Filter button - bottom left, just above the map's locate control, so
+      {/* Filter button - bottom left, beside the map's locate control and level with the nearby/issues buttons, so
           the bottom-right corner stays clear and the logo is easier to see.
           Same hide conditions as the FAB row, plus while the timetable panel
           occupies this corner. */}
       {!selectedRoute && !resultsSheetVisible && !selectedVehicle && (
-        <div className="absolute bottom-16 left-2.5 z-[45] pointer-events-auto">
+        <div className="absolute bottom-6 left-14 z-[45] pointer-events-auto">
           <FilterButton
             active={!!lineFilter}
             armedLine={armedLine?.line ?? null}
