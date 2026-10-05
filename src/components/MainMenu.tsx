@@ -1,10 +1,10 @@
 'use client'
 
-import { ChevronRight, Settings, Route } from 'lucide-react'
+import { ChevronRight, Settings, Route, Database } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n/context'
 import { MenuDrawer } from './MenuDrawer'
 
-export type MenuSection = 'menu' | 'settings' | 'myRoutes'
+export type MenuSection = 'menu' | 'settings' | 'myRoutes' | 'sources'
 
 interface MainMenuProps {
   onSelect: (section: MenuSection) => void
@@ -17,6 +17,7 @@ export function MainMenu({ onSelect, onClose }: MainMenuProps) {
   const items = [
     { section: 'settings' as const, label: t('menu.settings'), icon: Settings },
     { section: 'myRoutes' as const, label: t('menu.myRoutes'), icon: Route },
+    { section: 'sources' as const, label: t('menu.sources'), icon: Database },
   ]
 
   return (
