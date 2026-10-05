@@ -20,6 +20,8 @@ export interface GeoResult {
   placeCategory?: string
   placeDetail?: string
   openingHours?: string
+  // A ferry port outside Estonia (see /api/geocode) — shown with a ship icon.
+  ferryPort?: boolean
 }
 
 // cityIds: the rider's currently-selected cities (CityDef.id), passed

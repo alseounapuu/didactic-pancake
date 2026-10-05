@@ -39,6 +39,7 @@ const LINE_MODE_ICONS: Record<string, LucideIcon> = {
 // needed. Falls through kind-by-kind (place -> line -> stop -> address)
 // since the fields are mutually exclusive by construction (see GeoResult).
 function iconFor(result: GeoResult, category: PlaceCategory | undefined): LucideIcon {
+  if (result.ferryPort) return Ship
   if (result.placeCategory) return (category && CATEGORY_ICONS[category.icon]) || MapPin
   if (result.line && result.mode) return LINE_MODE_ICONS[result.mode] || Bus
   if (result.stopId) return Bus // stops don't expose their own mode to the client (see GeoResult) — one generic transit glyph covers all of them
