@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Star, Accessibility } from 'lucide-react'
+import { Star } from 'lucide-react'
 import { LocationInput } from './LocationInput'
 import { CitySelector } from './CitySelector'
 import { FavoriteChip } from './FavoriteChip'
 import { HomeWorkChip } from './HomeWorkChip'
 import { MenuButton } from './MenuButton'
 import { isLocationEnabled } from '@/hooks/use-location-setting'
-import { TransportMode, FavoriteRoute } from '@/lib/types'
+import { TransportMode, FavoriteRoute, PickedPoints } from '@/lib/types'
 import { CityDef } from '@/lib/constants'
 import { useFavorites } from '@/hooks/use-favorites'
 import { useRecentSearches } from '@/hooks/use-recent-searches'
@@ -29,7 +29,6 @@ interface SearchPanelProps {
   // bypassing this panel — can still honor the rider's own accessibility
   // choice instead of silently dropping it.
   wheelchair?: boolean
-  onWheelchairToggle?: () => void
   onViewStopBoard?: (name: string, lat: number, lng: number, stopId: string) => void
   // Called when the rider picks a line result from the same search box
   // (see LocationInput's stopsOnly mode, which now also returns lines —
@@ -50,9 +49,12 @@ interface SearchPanelProps {
   onExternalTripConsumed?: () => void
   // Hamburger tap; page.tsx renders the menu drawer.
   onOpenMenu?: () => void
+  // Reports the currently picked From/To coordinates (null when empty) so the
+  // map can show them as points before any search runs.
+  onPointsChange?: (points: PickedPoints) => void
 }
 
-export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, wheelchair = false, onWheelchairToggle, onViewStopBoard, onSelectLine, externalTrip, onExternalTripConsumed, onOpenMenu }: SearchPanelProps) {
+export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, wheelchair = false, onViewStopBoard, onSelectLine, externalTrip, onExternalTripConsumed, onOpenMenu, onPointsChange }: SearchPanelProps) {
   const { t, locale } = useTranslation()
   const [panelMode, setPanelMode] = useState<'plan' | 'board'>('plan')
   const [fromText, setFromText] = useState('')
@@ -149,6 +151,12 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
   // wheelchair mode -- from here or from Settings -- can change which
   // itinerary comes back first even without touching from/to. Re-run the
   // search right away, same "act immediately" pattern as the time-mode button.
+  useEffect(() => {
+    onPointsChange?.({ from: fromCoords, to: toCoords })
+    // Only when the picked coordinates change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromCoords, toCoords])
+
   const prevWheelchairRef = useRef(wheelchair)
   useEffect(() => {
     if (prevWheelchairRef.current === wheelchair) return
@@ -190,14 +198,14 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             <button
               type="button"
               onClick={() => setPanelMode('plan')}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'plan' ? 'bg-[#00022E] text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'plan' ? 'bg-[#051650] text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
             >
               {t('search.planTrip')}
             </button>
             <button
               type="button"
               onClick={() => setPanelMode('board')}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'board' ? 'bg-[#00022E] text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'board' ? 'bg-[#051650] text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
             >
               {t('search.departures')}
             </button>
@@ -253,7 +261,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             onClick={handleSwap}
             title={t('search.swap')}
             aria-label={t('search.swap')}
-            className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 z-10 w-7 h-7 rounded-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-md flex items-center justify-center text-gray-500 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-[#00022E]"
+            className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 z-10 w-7 h-7 rounded-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-md flex items-center justify-center text-gray-500 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-[#051650]"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0-4-4m4 4-4 4M16 17H4m0 0 4 4m-4-4 4-4" />
@@ -404,7 +412,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                     handleSearch(fromCoords, toCoords, fromText, toText, dateTime, timeMode === 'arrive')
                   }
                 }}
-                className="px-3 py-3 bg-[#00022E] text-white rounded-full text-xs font-medium shadow-md"
+                className="px-3 py-3 bg-[#051650] text-white rounded-full text-xs font-medium shadow-md"
               >
                 {t('search.done')}
               </button>
@@ -430,7 +438,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                 if (fromCoords && toCoords) handleSearch(fromCoords, toCoords, fromText, toText, '', false)
               }
             }}
-            className={`px-4 py-3 rounded-full text-sm shadow-md border ${timeMode !== 'now' && dateTime ? 'bg-[#00022E] border-[#00022E] text-white font-medium' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+            className={`px-4 py-3 rounded-full text-sm shadow-md border ${timeMode !== 'now' && dateTime ? 'bg-[#051650] border-[#051650] text-white font-medium' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
           >
             {timeMode === 'now' && t('search.departNow')}
             {timeMode === 'depart' && (dateTime
@@ -439,18 +447,6 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             {timeMode === 'arrive' && (dateTime
               ? t('search.arriveTime', { time: new Date(dateTime).toLocaleString(localeTag(locale), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }) })
               : t('search.arriveAt'))}
-          </button>
-        )}
-        {onWheelchairToggle && (
-          <button
-            type="button"
-            onClick={onWheelchairToggle}
-            title={wheelchair ? t('search.wheelchairOn') : t('search.wheelchairOff')}
-            aria-label={wheelchair ? t('search.wheelchairOn') : t('search.wheelchairOff')}
-            aria-pressed={wheelchair}
-            className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center shadow-md border ${wheelchair ? 'bg-[#00022E] border-[#00022E] text-white' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-          >
-            <Accessibility size={20} />
           </button>
         )}
         {activeCities && onCityToggle && onCountyToggle && onSetAllCities && (

@@ -24,7 +24,7 @@ export function MenuDrawer({ title, onClose, onBack, children }: MenuDrawerProps
         aria-label={title}
         className="fixed inset-y-0 right-0 z-[56] w-1/2 min-w-[14rem] max-w-sm bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl flex flex-col"
       >
-        <div className="flex items-center justify-between px-4 py-3 bg-[#00022E] text-white shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 bg-[#051650] text-white shrink-0">
           <div className="flex items-center gap-1 min-w-0">
             {onBack && (
               <button type="button" onClick={onBack} aria-label={t('menu.back')} className="p-1 -ml-1 rounded-full hover:bg-white/20 shrink-0">

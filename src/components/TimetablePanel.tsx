@@ -233,7 +233,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
 
   return (
     <div
-      className={`absolute bottom-3 left-3 z-50 w-64 ${sheetHeightVh === null ? 'max-h-[38vh] sm:max-h-[55vh]' : 'sm:max-h-[55vh]'} bg-white/85 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-lg flex flex-col overflow-hidden`}
+      className={`fixed inset-x-0 bottom-0 sm:inset-x-auto sm:left-1/2 sm:bottom-3 sm:-translate-x-1/2 z-50 sm:w-[88%] sm:max-w-lg ${sheetHeightVh === null ? 'max-h-[38vh] sm:max-h-[55vh]' : 'sm:max-h-[55vh]'} bg-white/85 dark:bg-gray-900/80 backdrop-blur-xl rounded-t-2xl sm:rounded-xl shadow-lg flex flex-col overflow-hidden`}
       style={sheetHeightVh !== null ? { maxHeight: `${sheetHeightVh}vh` } : undefined}
     >
       {/* Anchored to the bottom (same as RouteResults' bottom sheet), so the

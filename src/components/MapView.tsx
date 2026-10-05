@@ -4,7 +4,7 @@ import { useRef, useEffect, useCallback } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { TALLINN_CENTER, DEFAULT_ZOOM, MODE_COLORS, CityDef } from '@/lib/constants'
-import { VehiclePosition, TransportMode, RouteResult, ServiceAlert, TripStopInfo, TravellerPosition, TravellerSource } from '@/lib/types'
+import { PickedPoints, VehiclePosition, TransportMode, RouteResult, ServiceAlert, TripStopInfo, TravellerPosition, TravellerSource } from '@/lib/types'
 import { decodePolyline } from '@/lib/decode-polyline'
 import { formatAgo } from '@/lib/format-ago'
 import { useTranslation } from '@/lib/i18n/context'
@@ -201,6 +201,8 @@ interface RouteShapePattern {
 }
 
 interface MapViewProps {
+  // From/To picked in the search panel; shown as A/B points until a route is selected.
+  pickedPoints?: PickedPoints
   vehicles?: VehiclePosition[]
   activeModes?: TransportMode[]
   selectedRoute?: RouteResult | null
@@ -241,7 +243,7 @@ interface MapViewProps {
   onRouteShapeError?: () => void
 }
 
-export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, travellerPosition, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, focusLine, onVehicleClick, onRouteShapeError }: MapViewProps) {
+export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRoute, journeyVehicles, travellerPosition, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, focusLine, onVehicleClick, onRouteShapeError }: MapViewProps) {
   const { t, locale, modeLabel } = useTranslation()
   // Popups/titles are built inside map event closures set up once at mount
   // (see the click/marker-creation effects below), not re-created on every
@@ -273,6 +275,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
   const stopMarkersRef = useRef<maplibregl.Marker[]>([])
   const planLayerIdsRef = useRef<string[]>([])
   const planMarkerRef = useRef<maplibregl.Marker[]>([])
+  const pickedMarkersRef = useRef<{ from?: maplibregl.Marker; to?: maplibregl.Marker }>({})
   const journeyMarkersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
   const journeyVehiclesRef = useRef(journeyVehicles)
   useEffect(() => {
@@ -660,6 +663,46 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
       geolocateAddedRef.current = false
     }
   }, [locationEnabled])
+
+  // From/To points: drop an A/B marker as soon as a place is picked, before
+  // any search runs. Once a route is selected the route's own A/B markers
+  // take over, so these are hidden.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    const makeMarker = (label: string, color: string, p: { lat: number; lng: number }) => {
+      const el = document.createElement('div')
+      el.style.cssText = `width:24px;height:24px;border-radius:50%;background-color:${color};border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;font-family:system-ui,sans-serif`
+      el.textContent = label
+      return new maplibregl.Marker({ element: el }).setLngLat([p.lng, p.lat]).addTo(map)
+    }
+    const markers = pickedMarkersRef.current
+    markers.from?.remove()
+    markers.to?.remove()
+    markers.from = undefined
+    markers.to = undefined
+    if (selectedRoute || !pickedPoints) return
+    if (pickedPoints.from) markers.from = makeMarker('A', '#2563EB', pickedPoints.from)
+    if (pickedPoints.to) markers.to = makeMarker('B', '#DC2626', pickedPoints.to)
+  }, [pickedPoints, selectedRoute])
+
+  // Bring a newly picked point into view (both points together when both set).
+  const lastFlownRef = useRef('')
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || selectedRoute || !pickedPoints) return
+    const { from, to } = pickedPoints
+    const key = JSON.stringify([from, to])
+    if (key === lastFlownRef.current) return
+    lastFlownRef.current = key
+    if (from && to) {
+      const bounds = new maplibregl.LngLatBounds([from.lng, from.lat], [from.lng, from.lat]).extend([to.lng, to.lat])
+      map.fitBounds(bounds, { padding: 80, maxZoom: 15, duration: 800 })
+    } else if (from || to) {
+      const p = (from || to)!
+      map.flyTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 14), duration: 800 })
+    }
+  }, [pickedPoints, selectedRoute])
 
   // Initialize map
   useEffect(() => {

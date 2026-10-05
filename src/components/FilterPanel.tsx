@@ -41,7 +41,7 @@ export function FilterPanel({ vehicles, value, onChange, onClose }: FilterPanelP
 
   return (
     <div className="absolute bottom-24 right-4 z-40 w-80 max-h-[60vh] bg-white/85 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-lg flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 bg-[#00022E] text-white shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 bg-[#051650] text-white shrink-0">
         <span className="text-sm font-semibold">{t('filter.title')}</span>
         <button
           type="button"
@@ -59,7 +59,7 @@ export function FilterPanel({ vehicles, value, onChange, onClose }: FilterPanelP
           onClick={() => onChange(null)}
           className={`px-3 py-1.5 rounded-full text-xs font-medium border self-start ${
             !value
-              ? 'text-white bg-[#00022E] border-[#00022E]'
+              ? 'text-white bg-[#051650] border-[#051650]'
               : 'text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
           }`}
         >
