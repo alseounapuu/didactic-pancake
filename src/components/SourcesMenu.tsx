@@ -4,7 +4,7 @@ import { useTranslation } from '@/lib/i18n/context'
 import { MenuDrawer } from './MenuDrawer'
 
 const GROUPS: { title: string; items: string[] }[] = [
-  { title: 'sources.liveTitle', items: ['sources.live1', 'sources.live2'] },
+  { title: 'sources.liveTitle', items: ['sources.live1', 'sources.live2', 'sources.live3'] },
   { title: 'sources.scheduleTitle', items: ['sources.schedule1', 'sources.schedule2', 'sources.schedule3'] },
   { title: 'sources.mapTitle', items: ['sources.map1', 'sources.map2', 'sources.map3'] },
   { title: 'sources.trafficTitle', items: ['sources.traffic1', 'sources.traffic2'] },
