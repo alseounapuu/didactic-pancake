@@ -691,7 +691,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         />
       </ErrorBoundary>
 
-      {/* Timetable panel - bottom left */}
+      {/* Timetable panel - full-width bottom sheet, same placement as the route results */}
       {selectedVehicle && (
         <TimetablePanel
           key="timetable"
@@ -900,7 +900,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           mobile that sheet is full-width and bottom-anchored, so its
           bottom-right corner always sits exactly where these FABs float,
           on top of whatever route content is there. */}
-      {!selectedRoute && !resultsSheetVisible && (
+      {!selectedRoute && !resultsSheetVisible && !selectedVehicle && (
         <div className="absolute bottom-6 right-4 z-[45] flex items-center gap-2 pointer-events-auto">
           <NearbyButton
             active={showNearby}
