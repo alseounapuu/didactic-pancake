@@ -122,3 +122,9 @@ body {
   color: #8B98A5 !important;
 }
 
+/* Map controls in the bottom-left (the locate button) sit to the right of the
+   filter button and level with it, above the bottom logo band. */
+.maplibregl-ctrl-bottom-left {
+  left: 66px;
+  bottom: 55px;
+}
