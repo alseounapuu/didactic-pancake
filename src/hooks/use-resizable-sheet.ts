@@ -15,6 +15,7 @@ export function useResizableSheet(defaultVh: number, minVh: number, maxVh: numbe
   }, [defaultVh, minVh, maxVh])
 
   const reset = useCallback(() => setHeightVh(null), [])
+  const set = useCallback((vh: number) => setHeightVh(Math.min(maxVh, Math.max(minVh, vh))), [minVh, maxVh])
 
-  return { heightVh, resize, reset }
+  return { heightVh, resize, reset, set }
 }

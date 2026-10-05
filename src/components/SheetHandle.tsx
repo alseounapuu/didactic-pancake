@@ -14,13 +14,15 @@ interface SheetHandleProps {
   direction?: 'grow-up' | 'grow-down'
   label?: string
   className?: string
+  // Keep the handle on desktop too (default: mobile only).
+  showOnDesktop?: boolean
 }
 
 // Drag handle for resizing a floating panel on mobile — hidden from sm: up,
 // where the panel floats as a regular card instead and dragging its edge
 // wouldn't read as a sheet gesture (see RouteResults, the original source of
 // this pattern).
-export function SheetHandle({ heightVh, minVh, maxVh, onResize, direction = 'grow-up', label = 'Resize panel', className = '' }: SheetHandleProps) {
+export function SheetHandle({ heightVh, minVh, maxVh, onResize, direction = 'grow-up', label = 'Resize panel', className = '', showOnDesktop = false }: SheetHandleProps) {
   const dragStartY = useRef<number | null>(null)
   const sign = direction === 'grow-up' ? 1 : -1
 
@@ -40,7 +42,7 @@ export function SheetHandle({ heightVh, minVh, maxVh, onResize, direction = 'gro
 
   return (
     <div
-      className={`flex justify-center pt-2 pb-1 shrink-0 sm:hidden cursor-ns-resize touch-none ${className}`}
+      className={`flex justify-center pt-3 pb-2 shrink-0 ${showOnDesktop ? '' : 'sm:hidden'} cursor-ns-resize touch-none select-none ${className}`}
       role="slider"
       aria-label={label}
       aria-orientation="vertical"
@@ -52,7 +54,7 @@ export function SheetHandle({ heightVh, minVh, maxVh, onResize, direction = 'gro
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
     >
-      <div className="w-9 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+      <div className="w-12 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600" />
     </div>
   )
 }

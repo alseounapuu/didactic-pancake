@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { buildShipTrip, findShip } from '@/lib/ships'
 import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS, TALLINN_TRANSPORT_AGENCY_GTFS_ID } from '@/lib/constants'
 import { TripStopInfo } from '@/lib/types'
 import { LATE_BUFFER_SEC, computeStatusFromGPS, findBestTrip } from '@/lib/delay'
@@ -338,6 +339,20 @@ export async function GET(request: Request) {
   const hasLiveGps = searchParams.get('live') === '1'
 
   const nowSec = getServiceSeconds()
+
+  // Ships (live AIS, no timetable): route and ports from the ship's own
+  // reported destination — see buildShipTrip.
+  if (tripId?.startsWith('ship:')) {
+    try {
+      const ship = await findShip(tripId)
+      const trip = ship ? buildShipTrip(ship, nowSec) : null
+      if (!trip) return NextResponse.json({ error: 'Ship route not available' }, { status: 404 })
+      return NextResponse.json(trip)
+    } catch (error) {
+      console.error('Failed to build ship trip:', error)
+      return NextResponse.json({ error: 'Failed to fetch ship route' }, { status: 502 })
+    }
+  }
 
   // Method 1: Direct trip ID lookup (scheduled vehicles)
   if (tripId) {

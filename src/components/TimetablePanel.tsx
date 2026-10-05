@@ -73,7 +73,8 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(true)
   const [showAllStops, setShowAllStops] = useState(false)
-  const { heightVh: sheetHeightVh, resize: resizeSheet } = useResizableSheet(DEFAULT_SHEET_VH, MIN_SHEET_VH, MAX_SHEET_VH)
+  const { heightVh: sheetHeightVh, resize: resizeSheet, set: setSheetHeight } = useResizableSheet(DEFAULT_SHEET_VH, MIN_SHEET_VH, MAX_SHEET_VH)
+  const panelRef = useRef<HTMLDivElement>(null)
   const [stops, setStops] = useState<TripStopInfo[] | null>(null)
   const [delaySeconds, setDelaySeconds] = useState<number | undefined>(undefined)
   const [matchedTripId, setMatchedTripId] = useState<string | null>(null)
@@ -233,8 +234,9 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
 
   return (
     <div
+      ref={panelRef}
       className={`fixed inset-x-0 bottom-0 sm:inset-x-auto sm:left-1/2 sm:bottom-3 sm:-translate-x-1/2 z-50 sm:w-[88%] sm:max-w-lg ${sheetHeightVh === null ? 'max-h-[38vh] sm:max-h-[55vh]' : 'sm:max-h-[55vh]'} bg-white/85 dark:bg-gray-900/80 backdrop-blur-xl rounded-t-2xl sm:rounded-xl shadow-lg flex flex-col overflow-hidden`}
-      style={sheetHeightVh !== null ? { maxHeight: `${sheetHeightVh}vh` } : undefined}
+      style={sheetHeightVh !== null ? { height: `${sheetHeightVh}vh`, maxHeight: `${sheetHeightVh}vh` } : undefined}
     >
       {/* Anchored to the bottom (same as RouteResults' bottom sheet), so the
           panel grows upward — the handle sits at the top edge. */}
@@ -242,7 +244,17 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
         heightVh={sheetHeightVh ?? DEFAULT_SHEET_VH}
         minVh={MIN_SHEET_VH}
         maxVh={MAX_SHEET_VH}
-        onResize={resizeSheet}
+        // The panel is as tall as its content until first dragged, so start
+        // from its real height (not the default) — otherwise the first drags
+        // do nothing visible.
+        onResize={(deltaVh) => {
+          if (sheetHeightVh === null && panelRef.current) {
+            setSheetHeight((panelRef.current.offsetHeight / window.innerHeight) * 100 + deltaVh)
+          } else {
+            resizeSheet(deltaVh)
+          }
+        }}
+        showOnDesktop
         direction="grow-up"
         label={t('timetable.resizePanel')}
       />
@@ -285,7 +297,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
       {/* expanding-contracting */}
       <div
         className={`flex flex-col overflow-hidden ${
-          expanded ? 'max-h-[70vh]' : 'max-h-0'
+          expanded ? (sheetHeightVh === null ? 'max-h-[70vh]' : 'flex-1 min-h-0') : 'max-h-0'
         }`}
       >
       
@@ -369,7 +381,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs text-gray-400 dark:text-gray-500">
-                            {formatTime(stop.scheduledArrival)}
+                            {stop.noTime ? '' : formatTime(stop.scheduledArrival)}
                           </span>
                           {stop.platform && (
                             <span
