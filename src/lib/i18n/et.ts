@@ -224,6 +224,7 @@ const et: Dictionary = {
     empty: 'Salvestatud marsruute pole veel. Otsi sõit ja salvesta see tähega.',
   },
   sources: {
+    usedOn: 'Kasutatud info kuupäev: {date}',
     intro: 'Kust selle rakenduse reaalajas, sõiduplaani ja kaardi info pärineb.',
     liveTitle: 'Sõidukite asukohad reaalajas',
     live1: 'Tallinna ühistransport: Tallinna Linnatranspordi reaalajas GPS-andmevoog (transport.tallinn.ee).',

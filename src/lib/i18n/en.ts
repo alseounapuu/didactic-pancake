@@ -223,6 +223,7 @@ const en = {
     empty: 'No saved routes yet. Search a trip and tap the star to save it.',
   },
   sources: {
+    usedOn: 'Information used on: {date}',
     intro: 'Where the live, timetable and map information in this app comes from.',
     liveTitle: 'Live vehicle positions',
     live1: 'Tallinn public transport: live GPS feed from Tallinn City Transport (transport.tallinn.ee).',
