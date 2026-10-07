@@ -305,6 +305,11 @@ const et: Dictionary = {
     profileYouth: 'Noor',
     profileAdult: 'Täiskasvanu',
     profileSenior: 'Eakas',
+    ageChild: 'Alla 7-aastased',
+    ageYouth: '7–19-aastased',
+    ageAdult: '20–64-aastased',
+    ageSenior: '65-aastased ja vanemad',
+    ageNote: 'Vanusepiirid erinevad veidi vedajati, nt maakonnaliinidel sõidavad eakad tasuta alates 63. eluaastast.',
     residentOf: 'Registreeritud elanik linnas',
   },
 }

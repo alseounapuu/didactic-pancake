@@ -304,6 +304,11 @@ const en = {
     profileYouth: 'Youth',
     profileAdult: 'Adult',
     profileSenior: 'Senior',
+    ageChild: 'Under 7 years',
+    ageYouth: '7–19 years',
+    ageAdult: '20–64 years',
+    ageSenior: '65 years and over',
+    ageNote: 'Age limits vary slightly by operator, e.g. county buses give seniors free travel from 63.',
     residentOf: 'Registered resident of',
   },
 } as const

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useTranslation } from '@/lib/i18n/context'
 import { useRiderProfile } from '@/hooks/use-rider-profile'
 import { RiderCategory } from '@/lib/fares/tariffs'
@@ -13,6 +14,9 @@ const AGE_BANDS: RiderCategory[] = ['child', 'youth', 'adult', 'senior']
 export function RiderProfileFields() {
   const { t } = useTranslation()
   const { profile, setAgeBand, setResidentOf } = useRiderProfile()
+  // The age hint only appears once the rider taps a band, and starts hidden
+  // again the next time Settings is opened, to keep the screen uncluttered.
+  const [showAges, setShowAges] = useState(false)
 
   return (
     <>
@@ -22,7 +26,10 @@ export function RiderProfileFields() {
          <button
            key={band}
            type="button"
-           onClick={() => setAgeBand(band)}
+           onClick={() => {
+             setAgeBand(band)
+             setShowAges(true)
+           }}
            className={`px-2 py-1.5 rounded-lg text-xs ${
              band === profile.ageBand
                ? 'text-white bg-[#051650] font-medium'
@@ -33,6 +40,13 @@ export function RiderProfileFields() {
          </button>
        ))}
      </div>
+     {showAges && (
+       <p className="text-xs text-gray-500 dark:text-gray-400 -mt-1.5 mb-3">
+         <span className="font-medium text-gray-700 dark:text-gray-200">{t(`fare.age${profile.ageBand[0].toUpperCase()}${profile.ageBand.slice(1)}`)}</span>
+         <br />
+         {t('fare.ageNote')}
+       </p>
+     )}
      <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{t('fare.residentOf')}</label>
      <select
        value={profile.residentOf || ''}
