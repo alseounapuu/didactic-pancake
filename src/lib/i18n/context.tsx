@@ -18,12 +18,12 @@ function isLocale(value: string | null): value is Locale {
 // script (see langInitScript) already set document.documentElement.lang to
 // the right value before first paint, so reading it back here on the
 // client's first render is correct immediately rather than defaulting to
-// 'et' and correcting a tick later. suppressHydrationWarning on <html>
+// 'en' and correcting a tick later. suppressHydrationWarning on <html>
 // covers the resulting (expected) mismatch with the server-rendered markup.
 function initialLocale(): Locale {
-  if (typeof document === 'undefined') return 'et'
+  if (typeof document === 'undefined') return 'en'
   const lang = document.documentElement.lang
-  return isLocale(lang) ? lang : 'et'
+  return isLocale(lang) ? lang : 'en'
 }
 
 function getByPath(dict: unknown, path: string): unknown {

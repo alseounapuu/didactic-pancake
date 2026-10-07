@@ -46,9 +46,8 @@ const themeInitScript = `(function(){try{if(window.matchMedia('(prefers-color-sc
 // client instead of a post-hydration correction" pattern as themeInitScript
 // above — see LanguageProvider's initialLocale for the client-side read this
 // pairs with. A remembered choice (localStorage) wins outright; otherwise
-// the browser's own language list picks among the three supported locales,
-// falling back to Estonian (this app's home market) rather than English.
-const langInitScript = `(function(){try{var s=localStorage.getItem('lt-lang');var l=(s==='en'||s==='et'||s==='ru')?s:null;if(!l){var langs=navigator.languages||[navigator.language||''];for(var i=0;i<langs.length;i++){var p=(langs[i]||'').slice(0,2).toLowerCase();if(p==='ru'||p==='en'||p==='et'){l=p;break;}}}document.documentElement.lang=l||'et';}catch(e){}})()`
+// the default is English.
+const langInitScript = `(function(){try{var s=localStorage.getItem('lt-lang');var l=(s==='en'||s==='et'||s==='ru')?s:null;document.documentElement.lang=l||'en';}catch(e){}})()`
 
 export default function RootLayout({
   children,
@@ -56,7 +55,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="et" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script dangerouslySetInnerHTML={{ __html: langInitScript }} />
