@@ -16,7 +16,6 @@ const MODE_TO_OTP: Record<TransportMode, string> = {
   train: 'RAIL',
   ferry: 'FERRY',
   trolleybus: 'BUS',
-  nightbus: 'BUS',
 }
 
 // leg.headsign is the trip's overall destination, static for the whole trip

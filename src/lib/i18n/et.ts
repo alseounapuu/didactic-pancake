@@ -13,7 +13,6 @@ const et: Dictionary = {
     train: 'Rong',
     ferry: 'Parvlaev',
     trolleybus: 'Trollibuss',
-    nightbus: 'Ööbuss',
   },
   page: {
     mapUnavailable: 'Kaart pole saadaval',

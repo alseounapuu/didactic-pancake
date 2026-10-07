@@ -43,7 +43,6 @@ const MODE_MAP: Record<string, string> = {
   train: 'RAIL',
   ferry: 'FERRY',
   trolleybus: 'BUS',
-  nightbus: 'BUS',
 }
 
 export async function GET(request: Request) {
@@ -96,7 +95,7 @@ export async function GET(request: Request) {
     const exactMatches = substringMatches.filter((r) => r.shortName.toLowerCase() === routeName.toLowerCase())
     const allRoutes = exactMatches.length > 0 ? exactMatches : substringMatches
 
-    // bus/tram/trolleybus/nightbus route numbers are NOT unique nationwide —
+    // bus/tram/trolleybus route numbers are NOT unique nationwide —
     // dozens of unrelated regional operators reuse the same low numbers, so
     // picking routes[0] unfiltered can silently draw a completely different
     // town's route. Rail/ferry stay nationwide unfiltered since they're

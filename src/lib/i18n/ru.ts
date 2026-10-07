@@ -13,7 +13,6 @@ const ru: Dictionary = {
     train: 'Поезд',
     ferry: 'Паром',
     trolleybus: 'Троллейбус',
-    nightbus: 'Ночной автобус',
   },
   page: {
     mapUnavailable: 'Карта недоступна',

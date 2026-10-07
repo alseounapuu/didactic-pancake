@@ -34,11 +34,11 @@ describe('parseGpsFeed', () => {
     expect(result[0].mode).toBe('trolleybus')
   })
 
-  it('parses type code 7 as nightbus', () => {
+  it('parses type code 7 (night bus) as a regular bus', () => {
     const raw = '7,40,24776270,59428570,,309,505,Z,188,Tondi'
     const result = parseGpsFeed(raw)
     expect(result).toHaveLength(1)
-    expect(result[0].mode).toBe('nightbus')
+    expect(result[0].mode).toBe('bus')
   })
 
   it('skips malformed lines', () => {

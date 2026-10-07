@@ -12,7 +12,6 @@ const en = {
     train: 'Train',
     ferry: 'Ferry',
     trolleybus: 'Trolleybus',
-    nightbus: 'Night bus',
   },
   page: {
     mapUnavailable: 'Map unavailable',

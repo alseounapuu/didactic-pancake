@@ -15,7 +15,7 @@ import { priceItinerary } from '@/lib/fares/price'
 // Modes with a live position feed behind them: Tallinn's own for the road
 // modes, Elron's for trains (see src/lib/elron.ts). Ferry has none, so a
 // ferry leg can only ever show its scheduled time.
-const GPS_MODES = new Set<TransportMode>(['bus', 'tram', 'trolleybus', 'nightbus', 'train'])
+const GPS_MODES = new Set<TransportMode>(['bus', 'tram', 'trolleybus', 'train'])
 
 interface RouteCardProps {
   route: RouteResult

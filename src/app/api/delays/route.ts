@@ -35,13 +35,13 @@ const RESULT_CACHE_TTL = 8_000
 // match is unreliable for both, not just one of them.
 const SAME_TRIP_MAX_SPREAD_M = 500
 
-// bus/tram/trolleybus/nightbus have live GPS via Tallinn's own feed; train via
+// bus/tram/trolleybus have live GPS via Tallinn's own feed; train via
 // Elron's (unofficial, see ELRON_VEHICLE_POSITIONS_URL in constants). Ferry never enters
 // this endpoint — no real-time source exists for it — which alone guarantees
 // it's never shown as "on time" anywhere that consumes this data.
-type GpsMode = 'bus' | 'tram' | 'trolleybus' | 'nightbus' | 'train'
+type GpsMode = 'bus' | 'tram' | 'trolleybus' | 'train'
 
-// Tallinn's unified GTFS feed tags trolleybus/night-bus routes with GTFS mode
+// Tallinn's unified GTFS feed tags trolleybus routes with GTFS mode
 // BUS (no TROLLEYBUS route_type exists in the data, and night buses aren't a
 // distinct GTFS route_type at all — just a night-only service calendar) —
 // same mapping trip-stops/route.ts already uses. So the bulk schedule query
@@ -50,7 +50,6 @@ const VEHICLE_MODE_TO_OTP: Record<GpsMode, string> = {
   bus: 'BUS',
   tram: 'TRAM',
   trolleybus: 'BUS',
-  nightbus: 'BUS',
   train: 'RAIL',
 }
 
@@ -306,7 +305,7 @@ async function computeDelays(cityIds: string[] = []): Promise<DelaysResponse> {
   const gpsVehicles: (VehiclePosition & { mode: GpsMode })[] = [
     ...tallinnGps.filter(
       (v): v is VehiclePosition & { mode: GpsMode } =>
-        v.mode === 'bus' || v.mode === 'tram' || v.mode === 'trolleybus' || v.mode === 'nightbus',
+        v.mode === 'bus' || v.mode === 'tram' || v.mode === 'trolleybus',
     ),
     // line/destination/heading are unknown for Elron — resolved from the
     // trip the vehicle's own id names (see the mode === 'train' branch in the

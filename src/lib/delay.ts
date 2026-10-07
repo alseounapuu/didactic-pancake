@@ -670,8 +670,8 @@ export function findVehicleForLeg<T extends MatchableVehicle>(
   // night bus — both are tagged mode BUS, same as regular buses — so the
   // planner can never tell them apart either: every trolleybus/night-bus leg
   // comes back with leg.mode === 'bus'. When OTP says "bus", the real
-  // vehicle could legitimately be any of the three.
-  const acceptableModes: string[] = leg.mode === 'bus' ? ['bus', 'trolleybus', 'nightbus'] : [leg.mode]
+  // vehicle could legitimately be either.
+  const acceptableModes: string[] = leg.mode === 'bus' ? ['bus', 'trolleybus'] : [leg.mode]
 
   // Before departure, the assigned vehicle is frequently still finishing its
   // *previous* trip somewhere on approach, not yet parked at this leg's

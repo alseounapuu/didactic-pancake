@@ -16,7 +16,7 @@ export const GPS_FEED_TIMEOUT_MS = 5_000
 // format or go dark without notice.
 export const ELRON_VEHICLE_POSITIONS_URL = 'https://jbb.ghsq.de/gtfs/elron/VehiclePositions'
 
-// Tallinn's bus/tram/trolleybus/nightbus fleet (the only modes with live GPS —
+// Tallinn's bus/tram/trolleybus fleet (the only modes with live GPS —
 // see GPS_TYPE_MAP below) is run by a single agency, but the national GTFS
 // feed this OTP graph is built from bundles in dozens of unrelated regional
 // operators too, and low route numbers ("1".."30") are reused nationwide —
@@ -325,7 +325,7 @@ export const LINE_SEARCH_CITY_LABEL_RADIUS_M = 30_000
 // Mapping from gps.txt type codes to our transport modes
 // Verified against live feed: type 1 = trolleybus (lines terminate at Kopli/Kadriorg/
 // Kaubamaja/Balti jaam, Tallinn's trolleybus depots), type 2 = bus (majority),
-// type 3 = tram (lines 1-5). Type 7 = night bus, per the official field
+// type 3 = tram (lines 1-5). Type 7 = night bus (treated as a regular bus), per the official field
 // description published on Tallinn's open-data catalog entry for this feed
 // (transport type 1-trolleybus, 2-bus, 3-tram, 7-night bus) — only runs late
 // night/early morning, so it won't show in every live sample.
@@ -335,7 +335,7 @@ export const GPS_TYPE_MAP: Record<string, TransportMode> = {
   '3': 'tram',
   '4': 'train',
   '5': 'ferry',
-  '7': 'nightbus',
+  '7': 'bus',
 }
 
 export const MODE_COLORS: Record<TransportMode, string> = {
@@ -344,7 +344,6 @@ export const MODE_COLORS: Record<TransportMode, string> = {
   train: '#FF9800',
   ferry: '#4B0082',
   trolleybus: '#00008B',
-  nightbus: '#263238',
 }
 
 export const MODE_LABELS: Record<TransportMode, string> = {
@@ -353,10 +352,9 @@ export const MODE_LABELS: Record<TransportMode, string> = {
   train: 'Train',
   ferry: 'Ferry',
   trolleybus: 'Trolleybus',
-  nightbus: 'Night bus',
 }
 
-export const ALL_MODES: TransportMode[] = ['bus', 'tram', 'train', 'ferry', 'trolleybus', 'nightbus']
+export const ALL_MODES: TransportMode[] = ['bus', 'tram', 'train', 'ferry', 'trolleybus']
 
 // How far a disruption/delayed/searched-for vehicle can be from a selected
 // city (or a line search's own anchor stop) and still count as belonging to
