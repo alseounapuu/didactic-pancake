@@ -124,7 +124,16 @@ function WheelchairBadge({ leg }: { leg: RouteLeg }) {
 function FareChip({ fare, locale, t }: { fare: ItineraryFare; locale: Locale; t: (path: string, vars?: Record<string, string | number>) => string }) {
   if (fare.evidence === 'unknown') return null
   if (fare.evidence === 'operator') {
-    return <span className="text-xs text-gray-500 dark:text-gray-400 font-medium border border-gray-300 dark:border-gray-600 rounded px-1">{t('fare.atOperator')}</span>
+    const url = fare.tickets.find((ticket) => ticket.evidence === 'operator' && ticket.fareUrl)?.fareUrl
+    const chipClass = 'text-xs text-gray-500 dark:text-gray-400 font-medium border border-gray-300 dark:border-gray-600 rounded px-1'
+    // Opens the operator's own ticket page, so the rider can see the real price.
+    return url ? (
+      <a href={url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className={`${chipClass} hover:underline`}>
+        {t('fare.atOperator')} →
+      </a>
+    ) : (
+      <span className={chipClass}>{t('fare.atOperator')}</span>
+    )
   }
   if (fare.totalCents === undefined) return null
   if (fare.evidence === 'floor') {
@@ -154,14 +163,20 @@ function FareBreakdown({ fare, locale, t }: { fare: ItineraryFare; locale: Local
           <span className="flex items-center gap-2">
             <span className="font-medium text-gray-700 dark:text-gray-200">
               {ticket.evidence === 'operator' || ticket.evidence === 'unknown'
-                ? t('fare.atOperator')
+                ? ticket.fareUrl ? (
+                    <a href={ticket.fareUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="hover:underline">
+                      {t('fare.atOperator')} →
+                    </a>
+                  ) : (
+                    t('fare.atOperator')
+                  )
                 : ticket.evidence === 'floor'
                   ? t('fare.from', { price: formatEuroLocalized(ticket.cents ?? 0, locale) })
                   : ticket.cents === 0
                     ? t('fare.free')
                     : formatEuroLocalized(ticket.cents ?? 0, locale)}
             </span>
-            {ticket.fareUrl && (
+            {ticket.fareUrl && ticket.evidence !== 'operator' && ticket.evidence !== 'unknown' && (
               <a
                 href={ticket.fareUrl}
                 target="_blank"
