@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { X, Navigation, ChevronRight, ChevronLeft, ArrowLeft, AlertCircle } from 'lucide-react'
 import { MODE_COLORS } from '@/lib/constants'
-import { OVERVIEW_THRESHOLD_SEC } from '@/lib/delay'
+import { OVERVIEW_THRESHOLD_SEC, distanceMeters } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { ServiceAlert, RouteTrafficEstimate } from '@/lib/types'
 import { FeedStatus } from '@/lib/feed-status'
@@ -13,6 +13,9 @@ import { formatMinutesLocalized, localeTag } from '@/lib/i18n/format'
 interface IssuesPanelProps {
   vehicles: DelayedVehicle[]
   alerts: ServiceAlert[]
+  // Saved routes and recent searches (from/to points). Issues within
+  // MY_PLACE_RADIUS_M of one are listed first.
+  myPlaces?: { lat: number; lng: number }[]
   // Road-speed-inferred slowdowns (see RouteTrafficEstimate) — a distinct,
   // lower-confidence signal from `vehicles`, kept in its own section below
   // rather than merged in, same "never conflate GPS-confirmed with inferred"
@@ -27,9 +30,12 @@ interface IssuesPanelProps {
   onClose: () => void
 }
 
+const MY_PLACE_RADIUS_M = 1500
+
 export function IssuesPanel({
   vehicles,
   alerts,
+  myPlaces = [],
   trafficEstimates,
   delayStatus,
   alertStatus,
@@ -47,10 +53,18 @@ export function IssuesPanel({
   // this panel is sitting open, and a raw index would silently start
   // showing a completely different disruption underneath the user.
   const [viewingAlertId, setViewingAlertId] = useState<string | null>(null)
+  const nearMine = (p: { lat?: number; lng?: number }) =>
+    p.lat != null && p.lng != null &&
+    myPlaces.some((m) => distanceMeters(p.lat!, p.lng!, m.lat, m.lng) <= MY_PLACE_RADIUS_M)
+  // Issues near the rider's saved routes and recent searches come first;
+  // Array.sort is stable, so the existing order holds within each group.
+  const mineFirst = <T extends { lat?: number; lng?: number }>(a: T, b: T) =>
+    Number(nearMine(b)) - Number(nearMine(a))
   const delayedVehicles = vehicles
     .filter((v) => v.delaySeconds >= OVERVIEW_THRESHOLD_SEC)
-    .sort((a, b) => b.delaySeconds - a.delaySeconds)
-  const sortedEstimates = [...trafficEstimates].sort((a, b) => b.maxSeconds - a.maxSeconds)
+    .sort((a, b) => mineFirst(a, b) || b.delaySeconds - a.delaySeconds)
+  const sortedEstimates = [...trafficEstimates].sort((a, b) => mineFirst(a, b) || b.maxSeconds - a.maxSeconds)
+  const sortedAlerts = [...alerts].sort(mineFirst)
   // "No issues right now" is a claim that both feeds actually reported zero
   // issues — it must never be reachable just because a dead feed handed
   // back an empty array. unavailable rows (below) own that case instead.
@@ -63,12 +77,12 @@ export function IssuesPanel({
     delayedVehicles.length === 0 &&
     alerts.length === 0 &&
     sortedEstimates.length === 0
-  const viewingIndex = viewingAlertId != null ? alerts.findIndex((a) => a.id === viewingAlertId) : -1
-  const viewingAlert = viewingIndex >= 0 ? alerts[viewingIndex] : null
+  const viewingIndex = viewingAlertId != null ? sortedAlerts.findIndex((a) => a.id === viewingAlertId) : -1
+  const viewingAlert = viewingIndex >= 0 ? sortedAlerts[viewingIndex] : null
 
   return (
     <div className="absolute bottom-24 right-4 z-40 w-80 max-h-[60vh] bg-white/85 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-lg flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 bg-amber-500 text-white shrink-0">
+      <div className="flex items-center justify-between px-4 py-2.5 m-2 rounded-lg bg-[#051650] border-2 border-[#DC6601] text-white shrink-0">
         <span className="text-sm font-semibold">{t('issues.currentIssues')}</span>
         <button
           type="button"
@@ -166,7 +180,7 @@ export function IssuesPanel({
             )}
             {alerts.length > 0 && !viewingAlert && (
               <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-700 border-t border-gray-100 dark:border-gray-700">
-                {alerts.map((alert) => (
+                {sortedAlerts.map((alert) => (
                   <button
                     key={alert.id}
                     type="button"
@@ -203,14 +217,14 @@ export function IssuesPanel({
                   >
                     <ArrowLeft size={13} /> {t('issues.allIssues')}
                   </button>
-                  {alerts.length > 1 && (
+                  {sortedAlerts.length > 1 && (
                     <div className="flex items-center gap-2 text-xs text-gray-400">
-                      <span>{viewingIndex + 1}/{alerts.length}</span>
+                      <span>{viewingIndex + 1}/{sortedAlerts.length}</span>
                       <button
                         type="button"
                         aria-label={t('issues.previousDisruption')}
                         onClick={() => {
-                          const prev = alerts[(viewingIndex - 1 + alerts.length) % alerts.length]
+                          const prev = sortedAlerts[(viewingIndex - 1 + sortedAlerts.length) % sortedAlerts.length]
                           setViewingAlertId(prev.id)
                           onLocateAlert?.(prev)
                         }}
@@ -222,7 +236,7 @@ export function IssuesPanel({
                         type="button"
                         aria-label={t('issues.nextDisruption')}
                         onClick={() => {
-                          const next = alerts[(viewingIndex + 1) % alerts.length]
+                          const next = sortedAlerts[(viewingIndex + 1) % sortedAlerts.length]
                           setViewingAlertId(next.id)
                           onLocateAlert?.(next)
                         }}
