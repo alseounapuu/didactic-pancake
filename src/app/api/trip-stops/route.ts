@@ -56,7 +56,6 @@ const MODE_MAP: Record<string, string> = {
   train: 'RAIL',
   ferry: 'FERRY',
   trolleybus: 'BUS',
-  nightbus: 'BUS',
 }
 interface GqlStoptime {
   scheduledArrival: number
@@ -179,7 +178,7 @@ async function fetchTripsNationwide(routeName: string, otpMode: string, date: st
   const allRoutes = exactMatches.length > 0 ? exactMatches : substringMatches
 
   // Method 2 only ever matches a live Tallinn GPS vehicle (bus, tram,
-  // trolleybus, nightbus — nothing else has live GPS) — scope candidates
+  // trolleybus — nothing else has live GPS) — scope candidates
   // to Tallinn's own operator so a same-numbered route from an unrelated
   // town never wins the GPS-position match (see
   // TALLINN_TRANSPORT_AGENCY_GTFS_ID). Fall back to the unfiltered list

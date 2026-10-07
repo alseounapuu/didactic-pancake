@@ -14,6 +14,7 @@ import {
 import { foldName, tokenize, scoreName, clusterByLocation, nearestCityName, nearestCityPopulation, distanceToNearestActiveCity } from '@/lib/stop-search'
 import { searchPlaces } from '@/lib/places-db'
 import { searchForeignFerryPorts } from '@/lib/ferry-ports'
+import { fetchShips } from '@/lib/ships'
 import { placeCategoryBySlug, categoryLabel, ACCOMMODATION_CATEGORIES } from '@/lib/place-categories'
 
 // Cache warming flag — set to true once the initial load completes, so
@@ -392,6 +393,40 @@ function resolveGeocodeLang(value: string | null): GeocodeLang {
   return value === 'en' || value === 'ru' ? value : 'et'
 }
 
+// Ships currently sailing (live AIS, see src/lib/ships.ts), matched by name so
+// a ship can be found in the same box as bus lines. Returned as line results
+// with mode 'ferry', whose "line" is the ship's name — the same way ships are
+// shown as vehicles on the map. The ship feed is cached and best effort: if it
+// is down, the rest of the search still works.
+async function searchShips(query: string, lang: GeocodeLang): Promise<GeoResult[]> {
+  const foldedQuery = foldName(query)
+  // Unlike a one-digit line code, one letter is too vague to be a ship search.
+  if (query.length < 2 || !foldedQuery) return []
+  const tokens = tokenize(query)
+  const ferryLabel = LINE_MODE_LABELS_BY_LANG[lang].find((m) => m.key === 'ferry')!.label
+  try {
+    const ships = await fetchShips()
+    return ships
+      .filter((s) => !/^\d+$/.test(s.name))
+      .map((s) => ({ ship: s, score: scoreName(foldName(s.name), foldedQuery, tokens) }))
+      .filter((r) => r.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, SHIP_SEARCH_MAX_RESULTS)
+      .map(({ ship, score }) => ({
+        name: ship.destination ? `${ship.name} (${ferryLabel}) — ${ship.destination}` : `${ship.name} (${ferryLabel})`,
+        lat: ship.lat,
+        lng: ship.lng,
+        line: ship.name,
+        mode: 'ferry' as const,
+        score,
+      }))
+  } catch {
+    return []
+  }
+}
+
+const SHIP_SEARCH_MAX_RESULTS = 3
+
 async function searchTransitLines(query: string, activeCities: ActiveCity[] = [], lang: GeocodeLang = 'et'): Promise<GeoResult[]> {
   const LINE_MODE_LABELS = LINE_MODE_LABELS_BY_LANG[lang]
   const cache = await loadTransitStops()
@@ -668,10 +703,12 @@ export async function GET(request: Request) {
   // FTS prefix match against every accommodation nationwide isn't a
   // deliberate query the way a 1-digit line code is.
   if (isStopSearch) {
-    const [lineResults, stopResults] = await Promise.all([
+    const [transitLineResults, shipResults, stopResults] = await Promise.all([
       searchTransitLines(query, activeCities, lang),
+      searchShips(query, lang),
       searchTransitStops(query, activeCities, lang),
     ])
+    const lineResults = [...transitLineResults, ...shipResults]
     const accommodationResults = query.length >= 2
       ? searchOsmPlaces(query, activeCities, lang, ACCOMMODATION_CATEGORIES)
       : []
