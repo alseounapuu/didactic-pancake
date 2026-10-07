@@ -296,8 +296,6 @@ const et: Dictionary = {
     from: 'alates {price}',
     atOperator: 'Hind vedajal',
     buyAt: 'Osta: {site} →',
-    estimateDisclaimer: 'Hinnanguline hind — piletid ostetakse vedajalt.',
-    pricesAsOf: 'Hinnad seisuga {date}',
     ticketFor: '{authority} pilet',
     profileTitle: 'Sõidupiletiprofiil',
     profileChild: 'Laps',
