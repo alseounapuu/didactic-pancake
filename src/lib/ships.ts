@@ -157,6 +157,9 @@ const KUIVASTU: Port = { name: 'Kuivastu', lat: 58.577, lng: 23.396 }
 const HELTERMAA: Port = { name: 'Heltermaa', lat: 58.868, lng: 23.062 }
 const ROHUKULA: Port = { name: 'Rohuküla', lat: 58.917, lng: 23.435 }
 const TURKU: Port = { name: 'Turku', lat: 60.435, lng: 22.21 }
+const SVIBY: Port = { name: 'Sviby', lat: 58.971, lng: 23.313 }
+const LEPPNEEME: Port = { name: 'Leppneeme', lat: 59.551, lng: 24.867 }
+const KELNASE: Port = { name: 'Kelnase', lat: 59.6375, lng: 25.0116 }
 const PORTS: Record<string, Port> = {
   EEVAN: TALLINN,
   EETLL: TALLINN,
@@ -182,6 +185,11 @@ const PORTS: Record<string, Port> = {
   HELTERMAA: HELTERMAA,
   EERHK: ROHUKULA,
   ROHUKULA: ROHUKULA,
+  // AIS destinations are typed by hand, often without diacritics (Ü -> Y).
+  ROHUKYLA: ROHUKULA,
+  SVIBY: SVIBY,
+  LEPPNEEME: LEPPNEEME,
+  KELNASE: KELNASE,
   FITKU: TURKU,
   TURKU: TURKU,
 }
@@ -194,11 +202,22 @@ function foldPortToken(token: string): string {
     .trim()
 }
 
-// "EEVAN<>FIHEL", "VIRTSU < > KUIVASTU", "Tallinn-Helsinki" -> ports in order.
+// A port name, tolerating trailing junk crews add ("HELTERMAA L").
+function lookupPort(token: string): Port | undefined {
+  const words = foldPortToken(token).split(/\s+/)
+  for (let n = words.length; n > 0; n--) {
+    const port = PORTS[words.slice(0, n).join(' ')]
+    if (port) return port
+  }
+  return undefined
+}
+
+// "EEVAN<>FIHEL", "VIRTSU < > KUIVASTU", "Tallinn-Helsinki",
+// "ROHUKYLA=HELTERMAA L" -> ports in order.
 function portsFromDestination(destination: string): Port[] {
   const ports: Port[] = []
-  for (const token of destination.split(/\s*(?:<\s*[-=]?\s*>|[<>][-=]|[-=][<>]|[<>]|[-↔])\s*/)) {
-    const port = PORTS[foldPortToken(token)]
+  for (const token of destination.split(/\s*[<>=\-↔]+\s*/)) {
+    const port = lookupPort(token)
     if (port && ports[ports.length - 1] !== port) ports.push(port)
   }
   return ports
@@ -251,6 +270,8 @@ export function buildShipTrip(ship: ShipPosition, nowSec: number) {
     }
   })
   const line: [number, number][] = ports.map((p) => [p.lng, p.lat])
+  // A single named port has no line of its own — draw from the ship to it.
+  if (line.length === 1) line.unshift([ship.lng, ship.lat])
   return {
     tripId: ship.id,
     line: ship.name,
