@@ -44,6 +44,7 @@ import { useDelayToast } from '@/hooks/use-delay-toast'
 import { useTheme } from '@/hooks/use-theme'
 import { useTranslation } from '@/lib/i18n/context'
 import { useFavorites } from '@/hooks/use-favorites'
+import { useRecentSearches } from '@/hooks/use-recent-searches'
 import { cacheFavoriteDeparture } from '@/hooks/use-favorite-departure'
 import { LineFilter, applyLineFilter } from '@/lib/vehicle-filter'
 
@@ -176,7 +177,17 @@ function HomeContent() {
   // useRouteConditions' own enabled gate), so an idle search screen never
   // spends a request on it.
   const routeConditionsData = useRouteConditions(routes, activeCities)
-  const { findFavorite } = useFavorites()
+  const { favorites, findFavorite } = useFavorites()
+  const { recents } = useRecentSearches()
+  // Places the rider cares about (saved routes and past searches), used to
+  // float nearby issues to the top of the Issues panel.
+  const myPlaces = useMemo(
+    () => [...favorites, ...recents].flatMap((r) => [
+      { lat: r.fromLat, lng: r.fromLng },
+      { lat: r.toLat, lng: r.toLng },
+    ]),
+    [favorites, recents],
+  )
   // The from/to of the search that produced the current `routes`, kept only
   // to check afterwards whether it matches a saved favorite -- SearchPanel
   // owns the actual from/to input state, this is just enough to cache a
@@ -910,6 +921,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           key="issues"
           vehicles={activeDelayedVehicles}
           alerts={activeAlerts}
+          myPlaces={myPlaces}
           trafficEstimates={activeTrafficEstimates}
           delayStatus={delayData.status}
           alertStatus={alertData.status}

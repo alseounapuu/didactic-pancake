@@ -38,14 +38,8 @@ export function IssuesButton({ active, count, degraded, onClick }: IssuesButtonP
         stroke={active ? '#B45309' : degraded ? '#DC2626' : hasIssues ? '#D97706' : '#6B7280'}
         strokeWidth={2}
       />
-      {degraded ? (
+      {degraded && (
         <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 border-2 border-white dark:border-gray-800" />
-      ) : (
-        count > 0 && (
-          <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-            {count > 9 ? '9+' : count}
-          </span>
-        )
       )}
     </button>
   )
