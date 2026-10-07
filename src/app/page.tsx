@@ -1,7 +1,8 @@
 'use client'
 import { useJourneyMonitor } from '@/hooks/use-journey-monitor'
 import { DelayBanner } from '@/components/DelayBanner'
-import { useState, useEffect, useMemo, Suspense } from 'react'
+import { useState, useEffect, useMemo, useRef, Suspense } from 'react'
+import { useGeolocation } from '@/hooks/use-geolocation'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 const logo3 = '/logo3.png'
@@ -65,6 +66,29 @@ function HomeContent() {
     }
     return [CITIES[0]]
   })
+  // A visitor who hasn't picked cities (no ?cities=) starts on Tallinn, then
+  // moves to the nearest city once their location resolves. Any manual city
+  // change before that wins, so a late fix never overrides a deliberate pick.
+  const userPickedCity = useRef(!!citiesFromUrl)
+  const homeGeo = useGeolocation()
+  useEffect(() => {
+    if (!userPickedCity.current) homeGeo.request()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  useEffect(() => {
+    const pos = homeGeo.position
+    if (!pos || userPickedCity.current) return
+    let nearest: CityDef | null = null
+    let best = CITY_RELEVANCE_RADIUS_M
+    for (const c of CITIES) {
+      const d = distanceMeters(pos.lat, pos.lng, c.lat, c.lng)
+      if (d <= best) {
+        best = d
+        nearest = c
+      }
+    }
+    if (nearest) setActiveCities([nearest])
+  }, [homeGeo.position])
   const [activeModes] = useState<TransportMode[]>(
     modesFromUrl ? (modesFromUrl.split(',') as TransportMode[]) : [...ALL_MODES],
   )
@@ -248,6 +272,7 @@ function HomeContent() {
   }, [selectedRouteId, liveShareRouteId])
 
   const handleCityToggle = (city: CityDef) => {
+    userPickedCity.current = true
     const isActive = activeCities.some((c) => c.id === city.id)
     const next = isActive
       ? activeCities.filter((c) => c.id !== city.id)
@@ -263,6 +288,7 @@ function HomeContent() {
   }
 
   const handleCountyToggle = (countyCities: CityDef[]) => {
+    userPickedCity.current = true
     const allActive = countyCities.every((c) => activeCities.some((ac) => ac.id === c.id))
     const countyIds = new Set(countyCities.map((c) => c.id))
     const next = allActive
@@ -279,6 +305,7 @@ function HomeContent() {
   }
 
   const handleSetAllCities = (cities: CityDef[]) => {
+    userPickedCity.current = true
     setActiveCities(cities)
     const params = new URLSearchParams(searchParams.toString())
     if (cities.length === 0 || cities.length === CITIES.length) {
