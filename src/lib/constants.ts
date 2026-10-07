@@ -339,10 +339,10 @@ export const GPS_TYPE_MAP: Record<string, TransportMode> = {
 }
 
 export const MODE_COLORS: Record<TransportMode, string> = {
-  bus: '#4CAF50',
-  tram: '#F44336',
+  bus: '#3DAC78',
+  tram: '#B21807',
   train: '#FF9800',
-  ferry: '#9C27B0',
+  ferry: '#4B0082',
   trolleybus: '#00008B',
   nightbus: '#263238',
 }
