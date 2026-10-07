@@ -212,7 +212,7 @@ export function LocationInput({
           aria-controls={listboxId}
           aria-autocomplete="list"
           aria-activedescendant={activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined}
-          className="w-full px-3 py-3 text-base sm:text-sm focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+          className="w-full px-3 py-3 rounded-2xl text-base sm:text-sm focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
         />
         {allowMyLocation && (
           <button

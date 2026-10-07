@@ -296,8 +296,6 @@ const ru: Dictionary = {
     from: 'от {price}',
     atOperator: 'Цена у перевозчика',
     buyAt: 'Купить: {site} →',
-    estimateDisclaimer: 'Примерная стоимость — билеты покупаются у перевозчика.',
-    pricesAsOf: 'Цены по состоянию на {date}',
     ticketFor: 'Билет {authority}',
     profileTitle: 'Профиль тарифа',
     profileChild: 'Ребёнок',

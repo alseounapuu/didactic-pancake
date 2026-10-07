@@ -215,7 +215,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
       </div>
       {panelMode === 'board' && onViewStopBoard ? (
         <div className="flex flex-col gap-1">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-300 dark:border-gray-600">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-300 dark:border-gray-600">
             <LocationInput
               label={t('search.stopOrLine')}
               placeholder={t('search.searchStopOrLine')}
@@ -267,7 +267,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0-4-4m4 4-4 4M16 17H4m0 0 4 4m-4-4 4-4" />
             </svg>
           </button>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-300 dark:border-gray-600">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-300 dark:border-gray-600">
             <LocationInput
               label={t('search.from')}
               placeholder={t('search.fromPlaceholder')}
@@ -282,7 +282,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               }}
             />
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-300 dark:border-gray-600">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-300 dark:border-gray-600">
             <LocationInput
               label={t('search.to')}
               placeholder={t('search.toPlaceholder')}

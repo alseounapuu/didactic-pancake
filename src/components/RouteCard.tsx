@@ -190,9 +190,6 @@ function FareBreakdown({ fare, locale, t }: { fare: ItineraryFare; locale: Local
           </span>
         </div>
       ))}
-      <div className="text-[11px] text-gray-400 dark:text-gray-500">
-        {t('fare.estimateDisclaimer')} {fare.pricesAsOf && t('fare.pricesAsOf', { date: fare.pricesAsOf })}
-      </div>
     </div>
   )
 }

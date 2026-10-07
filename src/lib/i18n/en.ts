@@ -295,8 +295,6 @@ const en = {
     from: 'from {price}',
     atOperator: 'Price at operator',
     buyAt: 'Buy at {site} →',
-    estimateDisclaimer: 'Estimated fare — tickets are bought from the operator.',
-    pricesAsOf: 'Prices as of {date}',
     ticketFor: '{authority} ticket',
     profileTitle: 'Fare profile',
     profileChild: 'Child',
