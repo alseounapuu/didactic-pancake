@@ -438,7 +438,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                 if (fromCoords && toCoords) handleSearch(fromCoords, toCoords, fromText, toText, '', false)
               }
             }}
-            className={`px-4 py-3 rounded-full text-sm shadow-md border ${timeMode !== 'now' && dateTime ? 'bg-[#051650] border-[#051650] text-white font-medium' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+            className={`px-4 py-3 rounded-full text-sm shadow-md border ${timeMode !== 'now' && dateTime ? 'bg-[#051650] border-[#DC6601] ring-1 ring-[#DC6601] text-white font-medium' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
           >
             {timeMode === 'now' && t('search.departNow')}
             {timeMode === 'depart' && (dateTime
