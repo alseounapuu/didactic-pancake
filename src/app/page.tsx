@@ -22,7 +22,7 @@ import { DelayToast } from '@/components/DelayToast'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TimetablePanel } from '@/components/TimetablePanel'
 import { StopBoard, StopBoardTarget } from '@/components/StopBoard'
-import { FavoriteRoute, PickedPoints, TransportMode, VehiclePosition, ServiceAlert, StopDeparture, SharePosition, RouteLeg } from '@/lib/types'
+import { FavoriteRoute, PickedPoints, TransportMode, VehiclePosition, ServiceAlert, StopDeparture, SharePosition, RouteLeg, ShipPosition } from '@/lib/types'
 import { RidingPanel } from '@/components/RidingPanel'
 import { useRidingMode } from '@/hooks/use-riding-mode'
 import { useDepartureAlert } from '@/hooks/use-departure-alert'
@@ -417,6 +417,35 @@ function HomeContent() {
         distanceMeters(v.lat, v.lng, anchorLat, anchorLng) < distanceMeters(best.lat, best.lng, anchorLat, anchorLng) ? v : best,
       )
       return distanceMeters(best.lat, best.lng, anchorLat, anchorLng) <= CITY_RELEVANCE_RADIUS_M ? best : undefined
+    }
+
+    // A ship picked by name (see searchShips in the geocode route): its "line"
+    // is the ship's name, and it isn't in the schedule-based vehicle data, so
+    // look it up in the live ship feed instead of by line number.
+    if (mode === 'ferry') {
+      const wanted = line.trim().toLowerCase()
+      const isShip = (v: VehiclePosition) => v.id.startsWith('ship:') && v.line.trim().toLowerCase() === wanted
+      let ship = shipVehicles.find(isShip)
+      if (!ship) {
+        try {
+          const res = await fetch('/api/ships')
+          if (res.ok) {
+            const data: { ships: ShipPosition[] } = await res.json()
+            ship = data.ships.map(shipToVehicle).find(isShip)
+          }
+        } catch {
+          // Non-critical: fall through to the regular line lookup below.
+        }
+      }
+      if (ship) {
+        setSelectedVehicle(ship)
+        setSelectedVehicleInitialTripId(null)
+        setSelectedVehicleDelayed(false)
+        // Shown even when the ships layer is off, like any nationwide find.
+        setExtraMapVehicle(ship)
+        setFocusLine({ lat: ship.lat, lng: ship.lng })
+        return true
+      }
     }
 
     const delayed = nearest((delayData.data?.vehicles || []).filter((v) => v.mode === mode && v.line === line))
