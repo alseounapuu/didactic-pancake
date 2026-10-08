@@ -388,8 +388,8 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, conditions
           : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
       }`}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+        <div className="flex flex-wrap items-center gap-1 min-w-0">
           {transitLegs.length === 0 ? (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-400 text-white">
               <Footprints size={12} />
@@ -475,7 +475,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, conditions
           />
         </div>
       )}
-      <div className="flex items-center justify-between mt-1">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 mt-1">
         <span className="text-xs text-gray-500 dark:text-gray-400">{startTime} &rarr; {endTime}</span>
         {transitLegs.length > 0 && (
           delayMinutes === null ? (
