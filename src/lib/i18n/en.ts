@@ -233,7 +233,7 @@ const en = {
     tslGtfs: 'Ferry timetables to the islands (GTFS).',
     shipSailings: 'Ferry sailings between Estonia and Finland, from port calls; times partly estimated.',
     fares: 'Ticket prices from the operators’ published price lists.',
-    tallinnLive: 'Bus, tram and trolleybus positions in Tallinn.',
+    tallinnLive: 'Bus, tram and trolleybus positions and live stop arrival times in Tallinn.',
     elronLive: 'Train positions (GTFS-realtime).',
     shipsLive: 'Passenger ship and ferry positions (AIS).',
     osm: 'Map data, places and walking routes.',

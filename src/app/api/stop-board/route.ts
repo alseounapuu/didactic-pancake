@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server'
 import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS } from '@/lib/constants'
 import { StopBoardData, StopDeparture, TransportMode } from '@/lib/types'
 import { fetchStationPlatformIndex, resolvePlatform } from '@/lib/elron-platform'
+import { fetchSiriDepartures, getSiriId, siriDelayFor, SiriDeparture } from '@/lib/tallinn-siri'
 
 const STOP_FIELDS = `
+  gtfsId
   name
   lat
   lon
-  stoptimesWithoutPatterns(numberOfDepartures: $numberOfDepartures, omitCanceled: true) {
+  stoptimesWithoutPatterns(startTime: $startTime, numberOfDepartures: $numberOfDepartures, omitCanceled: true) {
     scheduledDeparture
     realtimeDeparture
     realtime
@@ -27,7 +29,7 @@ const STOP_FIELDS = `
 function buildStopBoardQuery(count: number): string {
   const vars = Array.from({ length: count }, (_, i) => `$stopId${i}: String!`).join(', ')
   const fields = Array.from({ length: count }, (_, i) => `stop${i}: stop(id: $stopId${i}) {${STOP_FIELDS}}`).join('\n')
-  return `query StopBoard($numberOfDepartures: Int!, ${vars}) {\n${fields}\n}`
+  return `query StopBoard($numberOfDepartures: Int!, $startTime: Long!, ${vars}) {\n${fields}\n}`
 }
 
 interface GqlStoptime {
@@ -43,6 +45,7 @@ interface GqlStoptime {
 }
 
 interface GqlStop {
+  gtfsId: string
   name: string
   lat: number
   lon: number
@@ -61,6 +64,31 @@ function otpModeToLocal(mode: string): TransportMode {
     FERRY: 'ferry',
   }
   return map[mode] || 'bus'
+}
+
+// How far back to look for trips scheduled in the past: a bus running late
+// is still coming even though its timetable slot has gone by.
+const LOOKBACK_SEC = 20 * 60
+// A bus whose live-adjusted time is just behind us is still shown as "now"
+// for this long, so a bus pulling in right now doesn't blink out.
+const DEPARTED_GRACE_SEC = 30
+const DELAYS_FETCH_TIMEOUT_MS = 3_000
+
+// Live GPS-derived delay per trip, from this app's own /api/delays. Tallinn's
+// OTP feed has no realtime, so without this the board only knows the
+// timetable. Best effort: on any failure the board just stays schedule-only.
+async function fetchTripDelays(): Promise<Map<string, number>> {
+  try {
+    const res = await fetch(`http://localhost:${process.env.PORT || 3000}/api/delays`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(DELAYS_FETCH_TIMEOUT_MS),
+    })
+    if (!res.ok) return new Map()
+    const data: { vehicles?: { tripId: string; delaySeconds: number }[] } = await res.json()
+    return new Map((data.vehicles || []).map((v) => [v.tripId, v.delaySeconds]))
+  } catch {
+    return new Map()
+  }
 }
 
 const CACHE_TTL = 20_000
@@ -85,9 +113,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    const variables: Record<string, string | number> = { numberOfDepartures: 12 }
+    const nowSec = Math.floor(Date.now() / 1000)
+    const variables: Record<string, string | number> = { numberOfDepartures: 30, startTime: nowSec - LOOKBACK_SEC }
     stopIds.forEach((id, i) => { variables[`stopId${i}`] = id })
 
+    const delaysPromise = fetchTripDelays()
     const response = await fetch(`${OTP_BASE_URL}/otp/gtfs/v1`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -117,16 +147,44 @@ export async function GET(request: Request) {
     // platforms (a loop route) — key on trip+departure time so it only
     // shows once.
     const seen = new Set<string>()
+    const tripDelays = await delaysPromise
+    // Tallinn's live per-stop arrivals, keyed by OTP stop id. Stops outside
+    // Tallinn's feed simply have no entry.
+    const siriByStop = new Map<string, SiriDeparture[]>()
+    await Promise.all(
+      stops.map(async (stop) => {
+        const siriId = await getSiriId(stop.gtfsId.replace(/^d+:/, ''))
+        if (siriId) siriByStop.set(stop.gtfsId, await fetchSiriDepartures(siriId))
+      }),
+    )
     const departures = stops
-      .flatMap((stop) => stop.stoptimesWithoutPatterns.map((st) => ({ st, stationName: stop.name })))
-      .map(({ st, stationName }): StopDeparture & { stationName: string; scheduledHHMM: string } => ({
+      .flatMap((stop) =>
+        stop.stoptimesWithoutPatterns.map((st) => {
+          // Live delay for this exact departure: Tallinn's per-stop feed
+          // first, then the GPS-matched trip delay, else timetable only.
+          const siriDelay = st.realtime
+            ? undefined
+            : siriDelayFor(
+                siriByStop.get(stop.gtfsId) ?? [],
+                st.trip.route.shortName,
+                st.trip.route.mode === 'TRAM',
+                st.scheduledDeparture,
+              )
+          return { st, stationName: stop.name, liveDelay: siriDelay ?? tripDelays.get(st.trip.gtfsId) }
+        }),
+      )
+      .map(({ st, stationName, liveDelay }): StopDeparture & { stationName: string; scheduledHHMM: string } => ({
         tripId: st.trip.gtfsId,
         line: st.trip.route.shortName,
         mode: otpModeToLocal(st.trip.route.mode),
         headsign: st.headsign || '',
-        departureEpochSec: st.serviceDay + (st.realtime ? st.realtimeDeparture : st.scheduledDeparture),
-        realtime: st.realtime,
-        delaySeconds: st.realtime ? st.realtimeDeparture - st.scheduledDeparture : undefined,
+        // OTP's own realtime wins; otherwise apply the GPS-derived delay of
+        // the vehicle matched to this trip, if any.
+        departureEpochSec:
+          st.serviceDay +
+          (st.realtime ? st.realtimeDeparture : st.scheduledDeparture + (liveDelay ?? 0)),
+        realtime: st.realtime || liveDelay !== undefined,
+        delaySeconds: st.realtime ? st.realtimeDeparture - st.scheduledDeparture : liveDelay,
         stationName,
         // Elron's board keys departures by the originally SCHEDULED time, so
         // this must ignore realtime/delay — never derive it from
@@ -137,6 +195,9 @@ export async function GET(request: Request) {
           minute: '2-digit',
         }),
       }))
+      // Drop what has really gone: the look-back above only exists to keep
+      // late buses that are still on their way.
+      .filter((dep) => dep.departureEpochSec >= nowSec - DEPARTED_GRACE_SEC)
       .filter((dep) => {
         const key = `${dep.tripId}-${dep.departureEpochSec}`
         if (seen.has(key)) return false
