@@ -221,10 +221,7 @@ export async function planTrip(
     // has nothing today.
     const widened = await fetchItineraries({ ...variables, searchWindow: WIDE_SEARCH_WINDOW_SECONDS })
     if (widened.itineraries.length > 0) {
-      return {
-        routes: await buildRoutes(widened.itineraries),
-        notice: 'Service is infrequent on this route — showing the next available departure.',
-      }
+      return { routes: await buildRoutes(widened.itineraries) }
     }
 
     // No itinerary at all — before giving up, check whether a plain walk is

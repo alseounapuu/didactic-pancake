@@ -94,6 +94,9 @@ const et: Dictionary = {
     viewStops: 'Vaata peatusi',
   },
   riding: {
+    soonTitle: 'Peaaegu kohal',
+    soonBody: 'Sinu peatus {name} on umbes 3 minuti pärast',
+    soonShort: '3 min',
     imOnThis: 'Sõidan sellega',
     stopRiding: 'Peata',
     nextStop: 'Järgmine: {name}',

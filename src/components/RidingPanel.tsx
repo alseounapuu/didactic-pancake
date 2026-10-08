@@ -32,6 +32,11 @@ export function RidingPanel({ leg, progress, error, onStop }: RidingPanelProps) 
           <span className="text-red-600 dark:text-red-400 font-medium truncate">{error}</span>
         ) : progress ? (
           <span className="flex items-center gap-1.5 min-w-0">
+            {progress.shouldWarnSoon && !progress.shouldAlarm && (
+              <span className="shrink-0 px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 font-semibold">
+                {t('riding.soonShort')}
+              </span>
+            )}
             {progress.shouldAlarm && (
               <span className="shrink-0 px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 font-semibold">
                 {t('riding.arriving')}

@@ -97,4 +97,23 @@ describe('ridingProgress', () => {
     expect(ridingProgress(early, fix).nextStop.name).toBe(ridingProgress(late, fix).nextStop.name)
     expect(ridingProgress(early, fix).nextStop.name).toBe('To')
   })
+
+  // The fixture leg is 3000m in 1200s = 2.5 m/s, so 3 minutes is 450m out.
+  it('does not warn while more than 3 minutes (at schedule pace) from the alight stop', () => {
+    const p = ridingProgress(legWithStops(), fixAt(2500)) // 500m left = 200s
+    expect(p.shouldWarnSoon).toBe(false)
+    expect(Math.round(p.etaToAlightSec ?? 0)).toBe(200)
+  })
+
+  it('warns once within 3 minutes of the alight stop, before the final alarm', () => {
+    const p = ridingProgress(legWithStops(), fixAt(2600)) // 400m left = 160s
+    expect(p.shouldWarnSoon).toBe(true)
+    expect(p.shouldAlarm).toBe(false)
+  })
+
+  it('hands over to the final alarm instead of the warning at the alight radius', () => {
+    const p = ridingProgress(legWithStops(), fixAt(2800))
+    expect(p.shouldAlarm).toBe(true)
+    expect(p.shouldWarnSoon).toBe(false)
+  })
 })
