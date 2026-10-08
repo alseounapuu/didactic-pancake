@@ -456,7 +456,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                 : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600'
             }`}
           >
-            <Star size={18} fill="#F59E0B" stroke="#F59E0B" />
+            <Star size={18} fill={showFavorites ? "#F59E0B" : "none"} stroke="#F59E0B" />
           </button>
         )}
         {activeCities && onCityToggle && onCountyToggle && onSetAllCities && (

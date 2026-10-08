@@ -235,6 +235,9 @@ interface MapViewProps {
   // legitimately miss — a rider picking a line outside the map's current
   // view still needs to see the map go there.
   focusLine?: { lat: number; lng: number } | null
+  // A picked line with no running vehicle: its route is still drawn, from the
+  // timetable's own shape, so the rider sees where the line goes.
+  lineShape?: { mode: string; line: string; lat: number; lng: number } | null
   onVehicleClick?: (vehicle: VehiclePosition | null) => void
   // Fired when a marker click can't produce a route shape at all (both
   // trip-stops and the route-shape fallback come up empty, or either throws)
@@ -243,7 +246,7 @@ interface MapViewProps {
   onRouteShapeError?: () => void
 }
 
-export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRoute, journeyVehicles, travellerPosition, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, focusLine, onVehicleClick, onRouteShapeError }: MapViewProps) {
+export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRoute, journeyVehicles, travellerPosition, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, focusLine, lineShape, onVehicleClick, onRouteShapeError }: MapViewProps) {
   const { t, locale, modeLabel } = useTranslation()
   // Popups/titles are built inside map event closures set up once at mount
   // (see the click/marker-creation effects below), not re-created on every
@@ -374,7 +377,7 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
         // If trip-stops failed, fall back to route-shape API
         if (!tripStops || tripStops.length === 0) {
           const shapeRes = await fetch(
-            `/api/route-shape?line=${encodeURIComponent(vehicle.line)}&mode=${encodeURIComponent(vehicle.mode)}`,
+            `/api/route-shape?line=${encodeURIComponent(vehicle.line)}&mode=${encodeURIComponent(vehicle.mode)}&lat=${vehicle.lat}&lng=${vehicle.lng}`,
           )
           if (!shapeRes.ok) {
             // Both sources came up empty — without this, clicking the marker
@@ -983,6 +986,91 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
     if (!map || !focusStop) return
     map.flyTo({ center: [focusStop.lng, focusStop.lat], zoom: 16, duration: 1500 })
   }, [focusStop])
+
+  // Draw a picked line's route when no vehicle of it is running (see lineShape).
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !lineShape) return
+    let cancelled = false
+    const draw = async () => {
+      try {
+        const res = await fetch(
+          `/api/route-shape?line=${encodeURIComponent(lineShape.line)}&mode=${encodeURIComponent(lineShape.mode)}&lat=${lineShape.lat}&lng=${lineShape.lng}`,
+        )
+        if (!res.ok) {
+          onRouteShapeErrorRef.current?.()
+          return
+        }
+        const data: { patterns: RouteShapePattern[] } = await res.json()
+        if (cancelled || !data.patterns?.length) return
+        const lines = data.patterns.map((p) => decodePolyline(p.geometry)).filter((c) => c.length >= 2)
+        if (lines.length === 0) return
+        clearRouteShape()
+        const color = MODE_COLORS[lineShape.mode as keyof typeof MODE_COLORS] ?? '#2563EB'
+        map.addSource(ROUTE_LINE_SOURCE, {
+          type: 'geojson',
+          data: { type: 'Feature', properties: {}, geometry: { type: 'MultiLineString', coordinates: lines } },
+        })
+        map.addLayer({
+          id: ROUTE_LINE_LAYER,
+          type: 'line',
+          source: ROUTE_LINE_SOURCE,
+          paint: { 'line-color': color, 'line-width': 5, 'line-opacity': 0.85 },
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+        })
+        const seen = new Set<string>()
+        const stopFeatures: GeoJSON.Feature<GeoJSON.Point>[] = []
+        for (const p of data.patterns) {
+          for (const stop of p.stops) {
+            const key = `${stop.name}|${stop.lat}|${stop.lng}`
+            if (seen.has(key)) continue
+            seen.add(key)
+            stopFeatures.push({
+              type: 'Feature',
+              properties: { name: stop.name },
+              geometry: { type: 'Point', coordinates: [stop.lng, stop.lat] },
+            })
+          }
+        }
+        map.addSource(ROUTE_STOPS_SOURCE, { type: 'geojson', data: { type: 'FeatureCollection', features: stopFeatures } })
+        map.addLayer({
+          id: ROUTE_STOPS_LAYER,
+          type: 'circle',
+          source: ROUTE_STOPS_SOURCE,
+          paint: { 'circle-radius': 5, 'circle-color': '#ffffff', 'circle-stroke-color': color, 'circle-stroke-width': 2 },
+        })
+        map.addLayer({
+          id: ROUTE_STOPS_LABEL_LAYER,
+          type: 'symbol',
+          source: ROUTE_STOPS_SOURCE,
+          minzoom: 13,
+          layout: {
+            'text-field': ['get', 'name'],
+            'text-size': 12,
+            'text-offset': [0, 1.3],
+            'text-anchor': 'top',
+            'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+          },
+          paint: { 'text-color': '#1f2937', 'text-halo-color': '#ffffff', 'text-halo-width': 2 },
+        })
+        const all = lines.flat()
+        const bounds = all.reduce(
+          (b, c) => b.extend(c as [number, number]),
+          new maplibregl.LngLatBounds(all[0] as [number, number], all[0] as [number, number]),
+        )
+        map.fitBounds(bounds, { padding: 80, maxZoom: 15, duration: 1500 })
+      } catch (err) {
+        console.error('line shape failed:', err)
+        onRouteShapeErrorRef.current?.()
+      }
+    }
+    if (mapReadyRef.current) draw()
+    else map.once('load', draw)
+    return () => {
+      cancelled = true
+      if (mapReadyRef.current && !activeRouteRef.current) clearRouteShape()
+    }
+  }, [lineShape, clearRouteShape])
 
   // Fly to a line picked from the departure-board search — see focusLine's
   // own comment on why this can't just piggyback on selectedVehicle's flyTo.

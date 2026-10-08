@@ -107,8 +107,20 @@ export async function GET(request: Request) {
       if (tallinnRoutes.length > 0) routes = tallinnRoutes
     }
 
-    // Return all patterns for the matching route
-    const route = routes[0]
+    // Same-numbered routes in different towns survive the filters above;
+    // when the caller says where it is looking (lat/lng), take the one whose
+    // stops are nearest that point instead of whichever OTP listed first.
+    const lat = Number(searchParams.get('lat'))
+    const lng = Number(searchParams.get('lng'))
+    let route = routes[0]
+    if (routes.length > 1 && searchParams.get('lat') && searchParams.get('lng') && Number.isFinite(lat) && Number.isFinite(lng)) {
+      const distTo = (r: GqlRoute) =>
+        Math.min(
+          ...r.patterns.flatMap((p) => p.stops.map((s) => (s.lat - lat) ** 2 + ((s.lon - lng) * Math.cos((lat * Math.PI) / 180)) ** 2)),
+          Infinity,
+        )
+      route = routes.reduce((best, r) => (distTo(r) < distTo(best) ? r : best))
+    }
     const patterns = route.patterns
       .filter((p) => p.patternGeometry?.points)
       .map((p) => ({
