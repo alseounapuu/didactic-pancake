@@ -156,6 +156,8 @@ function HomeContent() {
   // whether or not a live vehicle also gets found, means picking a line
   // always visibly goes to that line's own town.
   const [focusLine, setFocusLine] = useState<{ lat: number; lng: number } | null>(null)
+  // Set when a picked line has no running vehicle, so its route is still drawn.
+  const [lineShape, setLineShape] = useState<{ mode: string; line: string; lat: number; lng: number } | null>(null)
 
   const testAlerts = searchParams.get('test_alerts') === '1'
 
@@ -328,6 +330,7 @@ function HomeContent() {
   }
 
   const handleSearch = (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean, wc?: boolean) => {
+    setLineShape(null)
     setStopBoard(null)
     search(fromPlace, toPlace, modes, dateTime, arriveBy, undefined, wc)
     setLastSearchPlaces({ fromPlace, toPlace })
@@ -350,10 +353,12 @@ function HomeContent() {
   }, [routes, lastSearchPlaces, findFavorite])
 
   const handleClear = () => {
+    setLineShape(null)
     clear()
   }
 
   const handleViewStopBoard = (name: string, lat: number, lng: number, stopId: string) => {
+    setLineShape(null)
     clear()
     setStopBoard({ stopId, name, lat, lng })
   }
@@ -441,6 +446,7 @@ function HomeContent() {
     // Fly to the picked line's own town right away, independent of whether a
     // live vehicle turns up below — see focusLine's own comment for why.
     setFocusLine({ lat: anchorLat, lng: anchorLng })
+    setLineShape(null)
     // Arm the filter FAB with this line right away too, same reasoning as
     // focusLine above — a rider searching a line wants "filter to this" on
     // offer even when no live vehicle for it turns up below. Replaces any
@@ -518,10 +524,14 @@ function HomeContent() {
     } catch {
       // Non-critical: fall through to "not found" below.
     }
+    // Nothing is running right now (e.g. the first trip hasn't started):
+    // still draw the line's route from its timetable shape.
+    setLineShape({ mode, line, lat: anchorLat, lng: anchorLng })
     return false
   }
 
   const handleVehicleClick = (vehicle: VehiclePosition | null) => {
+    setLineShape(null)
     setSelectedVehicle(vehicle)
     setSelectedVehicleInitialTripId(null)
     setSelectedVehicleDelayed(false)
@@ -763,6 +773,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           focusAlert={focusedAlert}
           focusStop={stopBoard}
           focusLine={focusLine}
+          lineShape={lineShape}
           onVehicleClick={handleVehicleClick}
           onRouteShapeError={() => setRouteShapeError(true)}
         />
