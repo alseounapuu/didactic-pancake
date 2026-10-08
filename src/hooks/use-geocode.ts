@@ -90,7 +90,7 @@ export function useGeocode(stopsOnly = false, cityIds: string[] = []) {
       } finally {
         if (seq === requestSeqRef.current) setLoading(false)
       }
-    }, 300)
+    }, 150)
   }, [stopsOnly])
 
   const clear = useCallback(() => {
