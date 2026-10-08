@@ -102,6 +102,11 @@ export function StopBoard({ stop, onClose, onSelectDeparture }: StopBoardProps) 
                     {mins <= 0 ? t('common.now') : t('common.minShort', { n: mins })}
                   </span>
                   <span className="block text-[11px] text-gray-400 dark:text-gray-500">{formatClock(dep.departureEpochSec)}</span>
+                  {dep.delaySeconds != null && dep.delaySeconds >= 60 && (
+                    <span className="block text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                      +{t('common.minShort', { n: Math.round(dep.delaySeconds / 60) })}
+                    </span>
+                  )}
                 </span>
               </button>
             )

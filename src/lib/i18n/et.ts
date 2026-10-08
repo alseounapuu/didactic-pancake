@@ -234,7 +234,7 @@ const et: Dictionary = {
     tslGtfs: 'Saartele sõitvate praamide sõiduplaanid (GTFS).',
     shipSailings: 'Eesti–Soome praamireisid sadamakülastuste põhjal; ajad osaliselt hinnangulised.',
     fares: 'Piletihinnad vedajate avaldatud hinnakirjadest.',
-    tallinnLive: 'Bussi-, trammi- ja trollibusside asukohad Tallinnas.',
+    tallinnLive: 'Bussi-, trammi- ja trollibusside asukohad ja reaalajas peatuse saabumisajad Tallinnas.',
     elronLive: 'Rongide asukohad (GTFS-realtime).',
     shipsLive: 'Reisilaevade ja praamide asukohad (AIS).',
     osm: 'Kaardiandmed, kohad ja jalutusmarsruudid.',
