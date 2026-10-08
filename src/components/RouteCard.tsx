@@ -155,11 +155,21 @@ function FareChip({ fare, locale, t }: { fare: ItineraryFare; locale: Locale; t:
 // legs on the same authority within its transfer window share a ticket.
 function FareBreakdown({ fare, locale, t }: { fare: ItineraryFare; locale: Locale; t: (path: string, vars?: Record<string, string | number>) => string }) {
   if (fare.tickets.length === 0) return null
+  // "Price at operator" rows carry no price, so several legs on the same
+  // operator would just repeat the same link: show one per distinct operator
+  // page. Priced tickets are all kept so the rows still add up to the total.
+  const seenOperator = new Set<string>()
+  const tickets = fare.tickets.filter((ticket) => {
+    if (ticket.evidence !== 'operator' && ticket.evidence !== 'unknown') return true
+    const key = ticket.fareUrl ?? ticket.authority
+    if (seenOperator.has(key)) return false
+    seenOperator.add(key)
+    return true
+  })
   return (
     <div className="mt-1 pt-1.5 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-1">
-      {fare.tickets.map((ticket, i) => (
-        <div key={i} className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-          <span>{t('fare.ticketFor', { authority: ticket.authority })}</span>
+      {tickets.map((ticket, i) => (
+        <div key={i} className="flex items-center justify-end text-xs text-gray-500 dark:text-gray-400">
           <span className="flex items-center gap-2">
             <span className="font-medium text-gray-700 dark:text-gray-200">
               {ticket.evidence === 'operator' || ticket.evidence === 'unknown'

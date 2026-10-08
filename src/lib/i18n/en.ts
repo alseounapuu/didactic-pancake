@@ -296,7 +296,6 @@ const en = {
     from: 'from {price}',
     atOperator: 'Price at operator',
     buyAt: 'Buy at {site} →',
-    ticketFor: '{authority} ticket',
     profileTitle: 'Fare profile',
     profileChild: 'Child',
     profileYouth: 'Youth',
