@@ -297,7 +297,6 @@ const et: Dictionary = {
     from: 'alates {price}',
     atOperator: 'Hind vedajal',
     buyAt: 'Osta: {site} →',
-    ticketFor: '{authority} pilet',
     profileTitle: 'Sõidupiletiprofiil',
     profileChild: 'Laps',
     profileYouth: 'Noor',
