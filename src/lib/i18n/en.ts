@@ -93,6 +93,9 @@ const en = {
     viewStops: 'View stops',
   },
   riding: {
+    soonTitle: 'Almost there',
+    soonBody: 'Your stop, {name}, is in about 3 minutes',
+    soonShort: '3 min',
     imOnThis: "I'm on this",
     stopRiding: 'Stop',
     nextStop: 'Next: {name}',

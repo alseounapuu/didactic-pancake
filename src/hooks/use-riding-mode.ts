@@ -31,13 +31,13 @@ function randomSessionId(): string {
 // whether or not the tab is focused, on Android and on an installed iOS
 // PWA. Never blocks or throws; the on-screen RidingPanel carries the same
 // message regardless of whether either of these actually fires.
-function alertAlighting(title: string, body: string) {
+function alertAlighting(title: string, body: string, tag: string) {
   if (typeof navigator === 'undefined') return
   if ('vibrate' in navigator) navigator.vibrate([200, 100, 200])
   if (!('serviceWorker' in navigator) || typeof Notification === 'undefined') return
   if (Notification.permission !== 'granted') return
   navigator.serviceWorker.ready
-    .then((reg) => reg.showNotification(title, { body, tag: 'riding-alight' }))
+    .then((reg) => reg.showNotification(title, { body, tag }))
     .catch(() => {})
 }
 
@@ -72,21 +72,24 @@ export function useRidingMode(leg: RouteLeg | null, onAutoStop: () => void) {
   useEffect(() => {
     if (!leg || leg.mode === 'walk' || !leg.tripId) {
       setProgress(null)
+      setError(null)
       return
     }
+    // Errors stay on screen (the panel shows them with its Stop button)
+    // instead of ending the session: stopping at once made the button look
+    // like it did nothing.
     if (!navigator.geolocation) {
       setError(t('location.geolocationUnsupported'))
-      onAutoStopRef.current()
       return
     }
     if (!isLocationEnabled()) {
       setError(t('location.locationOff'))
-      onAutoStopRef.current()
       return
     }
 
     setError(null)
     let alarmed = false
+    let warnedSoon = false
     let lastSentAt = 0
     const sessionId = randomSessionId()
 
@@ -108,9 +111,13 @@ export function useRidingMode(leg: RouteLeg | null, onAutoStop: () => void) {
         const next = ridingProgress(leg, fix)
         setProgress(next)
 
+        if (next.shouldWarnSoon && !warnedSoon) {
+          warnedSoon = true
+          alertAlighting(t('riding.soonTitle'), t('riding.soonBody', { name: next.nextStop.name }), 'riding-soon')
+        }
         if (next.shouldAlarm && !alarmed) {
           alarmed = true
-          alertAlighting(t('riding.alarmTitle'), t('riding.alarmBody', { name: next.nextStop.name }))
+          alertAlighting(t('riding.alarmTitle'), t('riding.alarmBody', { name: next.nextStop.name }), 'riding-alight')
         }
 
         if (nowMs - lastSentAt < MIN_SEND_INTERVAL_MS) return
@@ -131,7 +138,6 @@ export function useRidingMode(leg: RouteLeg | null, onAutoStop: () => void) {
       },
       (err) => {
         setError(err.code === err.PERMISSION_DENIED ? t('location.locationDenied') : t('location.locationUnavailable'))
-        onAutoStopRef.current()
       },
       { enableHighAccuracy: true },
     )

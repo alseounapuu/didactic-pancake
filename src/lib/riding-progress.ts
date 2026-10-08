@@ -7,6 +7,9 @@ import { findNearestPointIndex, cumulativeDistancesM, distanceAlongShape } from 
 // that GPS noise (worse indoors / on a moving vehicle) doesn't fire it early.
 export const ALIGHT_ALARM_RADIUS_M = 250
 
+// Heads-up this long before the alight stop ("your stop in 3 minutes").
+export const ALIGHT_WARNING_LEAD_SEC = 3 * 60
+
 export interface RidingProgress {
   nextStop: LegPlace
   // Index into this leg's ordered stop list — 0 is leg.from (boarding), the
@@ -17,6 +20,14 @@ export interface RidingProgress {
   stopsRemaining: number
   distanceToNextStopM: number
   distanceToAlightM: number
+  // Time left to the alight stop at the leg's scheduled pace (its length over
+  // its scheduled duration) from the rider's actual position, so a late bus
+  // still gets a warning when it is really about to arrive. Undefined when the
+  // leg has no usable length/duration.
+  etaToAlightSec?: number
+  // True from ALIGHT_WARNING_LEAD_SEC before the alight stop until the final
+  // alarm takes over.
+  shouldWarnSoon: boolean
   shouldAlarm: boolean
 }
 
@@ -82,6 +93,10 @@ export function ridingProgress(leg: RouteLeg, fix: { lat: number; lng: number })
   }
 
   const distanceToAlightM = Math.max(0, stopDist[lastIndex] - fixDist)
+  const legLengthM = stopDist[lastIndex] - stopDist[0]
+  const etaToAlightSec =
+    legLengthM > 0 && leg.duration > 0 ? distanceToAlightM / (legLengthM / leg.duration) : undefined
+  const shouldAlarm = distanceToAlightM <= ALIGHT_ALARM_RADIUS_M
 
   return {
     nextStop: stops[nextStopIndex],
@@ -89,6 +104,8 @@ export function ridingProgress(leg: RouteLeg, fix: { lat: number; lng: number })
     stopsRemaining: lastIndex - nextStopIndex + 1,
     distanceToNextStopM: Math.max(0, stopDist[nextStopIndex] - fixDist),
     distanceToAlightM,
-    shouldAlarm: distanceToAlightM <= ALIGHT_ALARM_RADIUS_M,
+    etaToAlightSec,
+    shouldWarnSoon: !shouldAlarm && etaToAlightSec !== undefined && etaToAlightSec <= ALIGHT_WARNING_LEAD_SEC,
+    shouldAlarm,
   }
 }

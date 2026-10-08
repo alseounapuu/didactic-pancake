@@ -288,10 +288,11 @@ function ExpandableLeg({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onToggleRiding(leg) }}
-              className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+              aria-pressed={riding}
+              className={`px-2.5 py-0.5 rounded-full border-2 text-xs font-medium ${
                 riding
-                  ? 'bg-[#051650] text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                  ? 'bg-[#051650] border-[#DC6601] text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 border-transparent text-gray-600 dark:text-gray-300'
               }`}
             >
               {riding ? t('riding.stopRiding') : t('riding.imOnThis')}

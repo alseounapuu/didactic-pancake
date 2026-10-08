@@ -94,6 +94,9 @@ const ru: Dictionary = {
     viewStops: 'Показать остановки',
   },
   riding: {
+    soonTitle: 'Скоро ваша остановка',
+    soonBody: 'Ваша остановка «{name}» примерно через 3 минуты',
+    soonShort: '3 мин',
     imOnThis: 'Я еду здесь',
     stopRiding: 'Остановить',
     nextStop: 'Следующая: {name}',
