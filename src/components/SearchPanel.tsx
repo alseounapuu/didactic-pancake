@@ -64,6 +64,8 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
   const [timeMode, setTimeMode] = useState<'now' | 'depart' | 'arrive'>('now')
   const [dateTime, setDateTime] = useState('')
   const [pickerVisible, setPickerVisible] = useState(false)
+  // Favorite routes live behind the star button next to the city selector, not inline.
+  const [showFavorites, setShowFavorites] = useState(false)
   const [boardText, setBoardText] = useState('')
   // Set only when a picked line has no currently-active trip to show (see
   // onSelectLine) — cleared on the next successful pick or a fresh search.
@@ -333,7 +335,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           </div>
         )}
       </div>
-      {!hasInput && (homeWork.home || homeWork.work || favorites.length > 0) && (
+      {!hasInput && (homeWork.home || homeWork.work) && (
         <div className="flex flex-wrap gap-1.5">
           {homeWork.home && (
             <HomeWorkChip
@@ -355,14 +357,6 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               onClear={() => clearHomeWork('work')}
             />
           )}
-          {favorites.map((favorite) => (
-            <FavoriteChip
-              key={favorite.id}
-              favorite={favorite}
-              onSelect={() => handleFavoriteClick(favorite)}
-              onRemove={() => removeFavorite(favorite.id)}
-            />
-          ))}
         </div>
       )}
       {/* Once a destination is picked, offer to save it as Home/Work right
@@ -449,10 +443,38 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               : t('search.arriveAt'))}
           </button>
         )}
+        {favorites.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowFavorites((v) => !v)}
+            aria-expanded={showFavorites}
+            title={t('search.favoriteRoutes')}
+            aria-label={t('search.favoriteRoutes')}
+            className={`flex items-center justify-center w-10 h-10 rounded-full shadow-md border ${
+              showFavorites
+                ? 'bg-[#051650] border-[#DC6601] text-white'
+                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600'
+            }`}
+          >
+            <Star size={18} fill="#F59E0B" stroke="#F59E0B" />
+          </button>
+        )}
         {activeCities && onCityToggle && onCountyToggle && onSetAllCities && (
           <CitySelector activeCities={activeCities} onToggle={onCityToggle} onToggleCounty={onCountyToggle} onSetAll={onSetAllCities} />
         )}
       </div>
+      {showFavorites && favorites.length > 0 && (
+        <div className="flex flex-col items-start gap-1.5">
+          {favorites.map((favorite) => (
+            <FavoriteChip
+              key={favorite.id}
+              favorite={favorite}
+              onSelect={() => { setShowFavorites(false); handleFavoriteClick(favorite) }}
+              onRemove={() => removeFavorite(favorite.id)}
+            />
+          ))}
+        </div>
+      )}
       </>
       )}
     </div>
