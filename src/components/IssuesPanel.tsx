@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X, Navigation, ChevronRight, ChevronLeft, ArrowLeft, AlertCircle } from 'lucide-react'
 import { MODE_COLORS } from '@/lib/constants'
-import { OVERVIEW_THRESHOLD_SEC, distanceMeters } from '@/lib/delay'
+import { OVERVIEW_THRESHOLD_SEC, distanceMeters, projectOntoSegment } from '@/lib/delay'
+import { useGeolocation } from '@/hooks/use-geolocation'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { ServiceAlert, RouteTrafficEstimate } from '@/lib/types'
 import { FeedStatus } from '@/lib/feed-status'
@@ -13,9 +14,10 @@ import { formatMinutesLocalized, localeTag } from '@/lib/i18n/format'
 interface IssuesPanelProps {
   vehicles: DelayedVehicle[]
   alerts: ServiceAlert[]
-  // Saved routes and recent searches (from/to points). Issues within
-  // MY_PLACE_RADIUS_M of one are listed first.
-  myPlaces?: { lat: number; lng: number }[]
+  // Favorite routes and recent searches. Issues within MY_ROUTE_RADIUS_M of
+  // the straight way between a route's start and end are listed first,
+  // favorites before recents.
+  myRoutes?: { fromLat: number; fromLng: number; toLat: number; toLng: number; favorite: boolean }[]
   // Road-speed-inferred slowdowns (see RouteTrafficEstimate) — a distinct,
   // lower-confidence signal from `vehicles`, kept in its own section below
   // rather than merged in, same "never conflate GPS-confirmed with inferred"
@@ -30,12 +32,14 @@ interface IssuesPanelProps {
   onClose: () => void
 }
 
-const MY_PLACE_RADIUS_M = 1500
+const MY_ROUTE_RADIUS_M = 1000
+// Issues this close to where the rider is right now are listed higher too.
+const NEAR_ME_RADIUS_M = 3000
 
 export function IssuesPanel({
   vehicles,
   alerts,
-  myPlaces = [],
+  myRoutes = [],
   trafficEstimates,
   delayStatus,
   alertStatus,
@@ -53,13 +57,32 @@ export function IssuesPanel({
   // this panel is sitting open, and a raw index would silently start
   // showing a completely different disruption underneath the user.
   const [viewingAlertId, setViewingAlertId] = useState<string | null>(null)
-  const nearMine = (p: { lat?: number; lng?: number }) =>
-    p.lat != null && p.lng != null &&
-    myPlaces.some((m) => distanceMeters(p.lat!, p.lng!, m.lat, m.lng) <= MY_PLACE_RADIUS_M)
-  // Issues near the rider's saved routes and recent searches come first;
-  // Array.sort is stable, so the existing order holds within each group.
-  const mineFirst = <T extends { lat?: number; lng?: number }>(a: T, b: T) =>
-    Number(nearMine(b)) - Number(nearMine(a))
+  // Where the rider is, if they allow location (asked once when the panel
+  // opens; with location off or denied it is simply not used).
+  const { position: myPosition, request: requestPosition } = useGeolocation()
+  useEffect(() => {
+    requestPosition()
+  }, [requestPosition])
+
+  // Higher = listed earlier: +2 within NEAR_ME_RADIUS_M of the rider, and
+  // +2 on one of my favorite routes / +1 on a recent one. Array.sort is
+  // stable, so the existing order holds within each group.
+  const relevance = (p: { lat?: number; lng?: number }) => {
+    if (p.lat == null || p.lng == null) return 0
+    let score = 0
+    if (myPosition && distanceMeters(p.lat, p.lng, myPosition.lat, myPosition.lng) <= NEAR_ME_RADIUS_M) score += 2
+    let route = 0
+    for (const r of myRoutes) {
+      if (projectOntoSegment(p.lat, p.lng, r.fromLat, r.fromLng, r.toLat, r.toLng).dist > MY_ROUTE_RADIUS_M) continue
+      if (r.favorite) {
+        route = 2
+        break
+      }
+      route = 1
+    }
+    return score + route
+  }
+  const mineFirst = <T extends { lat?: number; lng?: number }>(a: T, b: T) => relevance(b) - relevance(a)
   const delayedVehicles = vehicles
     .filter((v) => v.delaySeconds >= OVERVIEW_THRESHOLD_SEC)
     .sort((a, b) => mineFirst(a, b) || b.delaySeconds - a.delaySeconds)

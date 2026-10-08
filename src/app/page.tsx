@@ -181,13 +181,19 @@ function HomeContent() {
   const routeConditionsData = useRouteConditions(routes, activeCities)
   const { favorites, findFavorite } = useFavorites()
   const { recents } = useRecentSearches()
-  // Places the rider cares about (saved routes and past searches), used to
-  // float nearby issues to the top of the Issues panel.
-  const myPlaces = useMemo(
-    () => [...favorites, ...recents].flatMap((r) => [
-      { lat: r.fromLat, lng: r.fromLng },
-      { lat: r.toLat, lng: r.toLng },
-    ]),
+  // Routes the rider cares about (favorites and past searches), used to float
+  // issues along them to the top of the Issues panel.
+  const myRoutes = useMemo(
+    () => [
+      ...favorites.map((r) => ({ ...r, favorite: true })),
+      ...recents.map((r) => ({ ...r, favorite: false })),
+    ].map((r) => ({
+      fromLat: r.fromLat,
+      fromLng: r.fromLng,
+      toLat: r.toLat,
+      toLng: r.toLng,
+      favorite: r.favorite,
+    })),
     [favorites, recents],
   )
   // The from/to of the search that produced the current `routes`, kept only
@@ -932,7 +938,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           key="issues"
           vehicles={activeDelayedVehicles}
           alerts={activeAlerts}
-          myPlaces={myPlaces}
+          myRoutes={myRoutes}
           trafficEstimates={activeTrafficEstimates}
           delayStatus={delayData.status}
           alertStatus={alertData.status}
