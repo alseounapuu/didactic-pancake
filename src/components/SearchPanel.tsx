@@ -5,14 +5,11 @@ import { Star } from 'lucide-react'
 import { LocationInput } from './LocationInput'
 import { CitySelector } from './CitySelector'
 import { FavoriteChip } from './FavoriteChip'
-import { HomeWorkChip } from './HomeWorkChip'
 import { MenuButton } from './MenuButton'
-import { isLocationEnabled } from '@/hooks/use-location-setting'
 import { TransportMode, FavoriteRoute, PickedPoints } from '@/lib/types'
 import { CityDef } from '@/lib/constants'
 import { useFavorites } from '@/hooks/use-favorites'
 import { useRecentSearches } from '@/hooks/use-recent-searches'
-import { useHomeWork } from '@/hooks/use-home-work'
 import { useTranslation } from '@/lib/i18n/context'
 import { localeTag } from '@/lib/i18n/format'
 
@@ -72,7 +69,6 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
   const [lineNotRunning, setLineNotRunning] = useState<string | null>(null)
   const { favorites, addFavorite, removeFavorite, findFavorite } = useFavorites()
   const { logSearch } = useRecentSearches()
-  const { places: homeWork, setPlace: setHomeWork, clearPlace: clearHomeWork } = useHomeWork()
 
   const handleSearch = (
     from = fromCoords,
@@ -121,32 +117,6 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalTrip])
 
-  // Tapping a set Home/Work chip fills "To" with it. If "From" is already
-  // picked, search right away; otherwise fall back to the rider's current
-  // position, same as LocationInput's "use my location" button, since a
-  // home/work shortcut with no "From" set would otherwise just sit there
-  // needing a manual pick to do anything.
-  const handleHomeWorkClick = (slot: 'home' | 'work') => {
-    const place = homeWork[slot]
-    if (!place) return
-    setToText(place.name)
-    setToCoords({ lat: place.lat, lng: place.lng })
-    if (fromCoords) {
-      handleSearch(fromCoords, { lat: place.lat, lng: place.lng }, fromText, place.name)
-      return
-    }
-    if (!navigator.geolocation || !isLocationEnabled()) return
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const coords = { lat: position.coords.latitude, lng: position.coords.longitude }
-        setFromText(t('location.myLocation'))
-        setFromCoords(coords)
-        handleSearch(coords, { lat: place.lat, lng: place.lng }, t('location.myLocation'), place.name)
-      },
-      () => {},
-      { enableHighAccuracy: true, timeout: 10000 },
-    )
-  }
 
   // OTP's own accessibility cost model already penalizes unknown/inaccessible
   // legs rather than banning them (see otp/router-config.json), so toggling
@@ -168,10 +138,6 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wheelchair])
 
-  const handleSetHomeWork = (slot: 'home' | 'work') => {
-    if (!toCoords) return
-    setHomeWork(slot, { name: toText, lat: toCoords.lat, lng: toCoords.lng })
-  }
 
   const activeFavorite = fromCoords && toCoords ? findFavorite(fromCoords.lat, fromCoords.lng, toCoords.lat, toCoords.lng) : null
 
@@ -272,6 +238,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-300 dark:border-gray-600">
             <LocationInput
               label={t('search.from')}
+              savedPlaces
               placeholder={t('search.fromPlaceholder')}
               value={fromText}
               onChange={setFromText}
@@ -287,6 +254,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-300 dark:border-gray-600">
             <LocationInput
               label={t('search.to')}
+              savedPlaces
               placeholder={t('search.toPlaceholder')}
               value={toText}
               onChange={setToText}
@@ -335,54 +303,6 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           </div>
         )}
       </div>
-      {!hasInput && (homeWork.home || homeWork.work) && (
-        <div className="flex flex-wrap gap-1.5">
-          {homeWork.home && (
-            <HomeWorkChip
-              slot="home"
-              place={homeWork.home}
-              canSet={!!toCoords}
-              onSelect={() => handleHomeWorkClick('home')}
-              onSet={() => handleSetHomeWork('home')}
-              onClear={() => clearHomeWork('home')}
-            />
-          )}
-          {homeWork.work && (
-            <HomeWorkChip
-              slot="work"
-              place={homeWork.work}
-              canSet={!!toCoords}
-              onSelect={() => handleHomeWorkClick('work')}
-              onSet={() => handleSetHomeWork('work')}
-              onClear={() => clearHomeWork('work')}
-            />
-          )}
-        </div>
-      )}
-      {/* Once a destination is picked, offer to save it as Home/Work right
-          there instead of only in the (now-hidden) quick-pick row above. */}
-      {hasInput && toCoords && (!homeWork.home || !homeWork.work) && (
-        <div className="flex flex-wrap gap-1.5">
-          {!homeWork.home && (
-            <HomeWorkChip
-              slot="home"
-              canSet
-              onSelect={() => {}}
-              onSet={() => handleSetHomeWork('home')}
-              onClear={() => {}}
-            />
-          )}
-          {!homeWork.work && (
-            <HomeWorkChip
-              slot="work"
-              canSet
-              onSelect={() => {}}
-              onSet={() => handleSetHomeWork('work')}
-              onClear={() => {}}
-            />
-          )}
-        </div>
-      )}
       {/* Departure time selector + city selector */}
       <div className="flex items-center gap-2">
         {pickerVisible ? (

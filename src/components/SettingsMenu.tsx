@@ -4,6 +4,7 @@ import { useTranslation } from '@/lib/i18n/context'
 import { MenuDrawer } from './MenuDrawer'
 import { LanguageFields } from './LanguageSelector'
 import { RiderProfileFields } from './RiderProfileSelector'
+import { HomeWorkFields } from './HomeWorkFields'
 import { useLocationSetting } from '@/hooks/use-location-setting'
 import { useShowAllVehicles } from '@/hooks/use-show-all-vehicles'
 import { useShowShips } from '@/hooks/use-show-ships'
@@ -76,6 +77,9 @@ export function SettingsMenu({ onClose, onBack, wheelchair, onWheelchairToggle }
         </div>
         <div>
           <RiderProfileFields />
+        </div>
+        <div>
+          <HomeWorkFields />
         </div>
         <div>
           <SectionTitle>{t('menu.location')}</SectionTitle>

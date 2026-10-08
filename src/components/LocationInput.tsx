@@ -8,13 +8,14 @@ import {
   Scissors, Sparkles, Glasses, Dumbbell, Waves, Trophy, Pill, Cross,
   HeartPulse, Stethoscope, Smile, PawPrint, Landmark, CreditCard, Mail,
   Clapperboard, Drama, Building2, Library, Disc3, Trees, BedDouble, Bed,
-  House, Building, BedSingle,
+  House, Building, BedSingle, Home, Briefcase,
   Fuel, BatteryCharging, SquareParking, Shield, School, GraduationCap, Baby,
   type LucideIcon,
 } from 'lucide-react'
 import { useGeocode, GeoResult } from '@/hooks/use-geocode'
 import { useTranslation } from '@/lib/i18n/context'
 import { isLocationEnabled } from '@/hooks/use-location-setting'
+import { useHomeWork } from '@/hooks/use-home-work'
 import { evaluateOpeningHours } from '@/lib/opening-hours'
 import { placeCategoryBySlug, PlaceCategory } from '@/lib/place-categories'
 
@@ -38,7 +39,8 @@ const LINE_MODE_ICONS: Record<string, LucideIcon> = {
 // Resolves purely from what /api/geocode already returns — no extra data
 // needed. Falls through kind-by-kind (place -> line -> stop -> address)
 // since the fields are mutually exclusive by construction (see GeoResult).
-function iconFor(result: GeoResult, category: PlaceCategory | undefined): LucideIcon {
+function iconFor(result: Option, category: PlaceCategory | undefined): LucideIcon {
+  if (result.saved) return result.saved === 'home' ? Home : Briefcase
   if (result.ferryPort) return Ship
   if (result.placeCategory) return (category && CATEGORY_ICONS[category.icon]) || MapPin
   if (result.line && result.mode) return LINE_MODE_ICONS[result.mode] || Bus
@@ -95,7 +97,11 @@ interface LocationInputProps {
   // star toggle, kept next to the field it actually applies to instead of
   // off in the search panel's separate action-button column.
   trailing?: React.ReactNode
+  // Offer the Home/Work places saved in Settings as the first options.
+  savedPlaces?: boolean
 }
+
+type Option = GeoResult & { saved?: 'home' | 'work' }
 
 export function LocationInput({
   label,
@@ -107,13 +113,28 @@ export function LocationInput({
   stopsOnly,
   cityIds,
   trailing,
+  savedPlaces,
 }: LocationInputProps) {
   const { t } = useTranslation()
   const [showDropdown, setShowDropdown] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
   const [locating, setLocating] = useState(false)
   const [locateError, setLocateError] = useState<string | null>(null)
-  const { results, search, clear } = useGeocode(stopsOnly, cityIds)
+  const { results: geoResults, search, clear } = useGeocode(stopsOnly, cityIds)
+  const { places: homeWork } = useHomeWork()
+  // Home/Work (if set in Settings) come first: all of them while the box is
+  // empty, afterwards only those whose label starts with what's typed.
+  const typed = value.trim().toLowerCase()
+  const savedOptions: Option[] = savedPlaces
+    ? (['home', 'work'] as const).flatMap((slot) => {
+        const place = homeWork[slot]
+        if (!place) return []
+        const label = t(`search.${slot}`)
+        if (typed && !label.toLowerCase().startsWith(typed)) return []
+        return [{ name: place.name, lat: place.lat, lng: place.lng, saved: slot, placeDetail: label }]
+      })
+    : []
+  const results: Option[] = [...savedOptions, ...geoResults]
   const wrapperRef = useRef<HTMLDivElement>(null)
   const listboxId = useId()
 
@@ -125,9 +146,9 @@ export function LocationInput({
   // an extra render/effect round-trip") rather than in a useEffect, which
   // would trigger a cascading re-render for a value that's cheap to compute
   // as we go.
-  const [prevResults, setPrevResults] = useState(results)
-  if (prevResults !== results) {
-    setPrevResults(results)
+  const [prevResults, setPrevResults] = useState(geoResults)
+  if (prevResults !== geoResults) {
+    setPrevResults(geoResults)
     if (activeIndex !== -1) setActiveIndex(-1)
   }
 
@@ -147,8 +168,9 @@ export function LocationInput({
     setShowDropdown(true)
   }
 
-  const handleSelect = (result: GeoResult) => {
-    onSelect(result)
+  const handleSelect = (result: Option) => {
+    const { saved, ...place } = result
+    onSelect(saved ? { name: place.name, lat: place.lat, lng: place.lng } : place)
     setShowDropdown(false)
     clear()
   }
@@ -261,8 +283,9 @@ export function LocationInput({
                 >
                   <Icon size={16} className="shrink-0 mt-0.5 text-gray-400 dark:text-gray-500" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm text-gray-900 dark:text-gray-100">{r.name}</span>
-                    {r.placeDetail && (
+                    <span className="block truncate text-sm text-gray-900 dark:text-gray-100">{r.saved ? r.placeDetail : r.name}</span>
+                    {r.saved && <span className="block truncate text-xs text-gray-500 dark:text-gray-400">{r.name}</span>}
+                    {!r.saved && r.placeDetail && (
                       <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                         <span className="truncate">{r.placeDetail}</span>
                         {r.openingHours && <OpenBadge spec={r.openingHours} />}
