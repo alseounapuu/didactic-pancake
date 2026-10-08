@@ -363,6 +363,9 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               : t('search.arriveAt'))}
           </button>
         )}
+        {activeCities && onCityToggle && onCountyToggle && onSetAllCities && (
+          <CitySelector activeCities={activeCities} onToggle={onCityToggle} onToggleCounty={onCountyToggle} onSetAll={onSetAllCities} />
+        )}
         {favorites.length > 0 && (
           <button
             type="button"
@@ -378,9 +381,6 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           >
             <Star size={18} fill={showFavorites ? "#F59E0B" : "none"} stroke="#F59E0B" />
           </button>
-        )}
-        {activeCities && onCityToggle && onCountyToggle && onSetAllCities && (
-          <CitySelector activeCities={activeCities} onToggle={onCityToggle} onToggleCounty={onCountyToggle} onSetAll={onSetAllCities} />
         )}
       </div>
       {showFavorites && favorites.length > 0 && (

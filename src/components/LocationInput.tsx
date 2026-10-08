@@ -8,7 +8,7 @@ import {
   Scissors, Sparkles, Glasses, Dumbbell, Waves, Trophy, Pill, Cross,
   HeartPulse, Stethoscope, Smile, PawPrint, Landmark, CreditCard, Mail,
   Clapperboard, Drama, Building2, Library, Disc3, Trees, BedDouble, Bed,
-  House, Building, BedSingle, Home, Briefcase,
+  House, Building, BedSingle, Home, Briefcase, Star, Clock,
   Fuel, BatteryCharging, SquareParking, Shield, School, GraduationCap, Baby,
   type LucideIcon,
 } from 'lucide-react'
@@ -16,6 +16,8 @@ import { useGeocode, GeoResult } from '@/hooks/use-geocode'
 import { useTranslation } from '@/lib/i18n/context'
 import { isLocationEnabled } from '@/hooks/use-location-setting'
 import { useHomeWork } from '@/hooks/use-home-work'
+import { useFavorites } from '@/hooks/use-favorites'
+import { useRecentSearches } from '@/hooks/use-recent-searches'
 import { evaluateOpeningHours } from '@/lib/opening-hours'
 import { placeCategoryBySlug, PlaceCategory } from '@/lib/place-categories'
 
@@ -40,6 +42,8 @@ const LINE_MODE_ICONS: Record<string, LucideIcon> = {
 // needed. Falls through kind-by-kind (place -> line -> stop -> address)
 // since the fields are mutually exclusive by construction (see GeoResult).
 function iconFor(result: Option, category: PlaceCategory | undefined): LucideIcon {
+  if (result.saved === 'favorite') return Star
+  if (result.saved === 'recent') return Clock
   if (result.saved) return result.saved === 'home' ? Home : Briefcase
   if (result.ferryPort) return Ship
   if (result.placeCategory) return (category && CATEGORY_ICONS[category.icon]) || MapPin
@@ -101,7 +105,10 @@ interface LocationInputProps {
   savedPlaces?: boolean
 }
 
-type Option = GeoResult & { saved?: 'home' | 'work' }
+type Option = GeoResult & { saved?: 'home' | 'work' | 'favorite' | 'recent' }
+
+// How many remembered (favorite/history) places to offer at most.
+const MAX_REMEMBERED = 4
 
 export function LocationInput({
   label,
@@ -122,6 +129,8 @@ export function LocationInput({
   const [locateError, setLocateError] = useState<string | null>(null)
   const { results: geoResults, search, clear } = useGeocode(stopsOnly, cityIds)
   const { places: homeWork } = useHomeWork()
+  const { favorites } = useFavorites()
+  const { recents } = useRecentSearches()
   // Home/Work (if set in Settings) come first: all of them while the box is
   // empty, afterwards only those whose label starts with what's typed.
   const typed = value.trim().toLowerCase()
@@ -134,7 +143,32 @@ export function LocationInput({
         return [{ name: place.name, lat: place.lat, lng: place.lng, saved: slot, placeDetail: label }]
       })
     : []
-  const results: Option[] = [...savedOptions, ...geoResults]
+  // Places from favorite routes and past searches come right after Home/Work
+  // (favorites first), narrowed to what's typed. Same place never twice.
+  const myLocationLabel = t('location.myLocation')
+  const rememberedOptions: Option[] = []
+  if (savedPlaces) {
+    const seen = new Set(savedOptions.map((o) => o.name.toLowerCase()))
+    const candidates: { kind: 'favorite' | 'recent'; name: string; lat: number; lng: number }[] = [
+      ...favorites.flatMap((f) => [
+        { kind: 'favorite' as const, name: f.fromName, lat: f.fromLat, lng: f.fromLng },
+        { kind: 'favorite' as const, name: f.toName, lat: f.toLat, lng: f.toLng },
+      ]),
+      ...recents.flatMap((r) => [
+        { kind: 'recent' as const, name: r.toName, lat: r.toLat, lng: r.toLng },
+        { kind: 'recent' as const, name: r.fromName, lat: r.fromLat, lng: r.fromLng },
+      ]),
+    ]
+    for (const c of candidates) {
+      if (rememberedOptions.length >= MAX_REMEMBERED) break
+      const key = c.name.toLowerCase()
+      if (!c.name || c.name === myLocationLabel || seen.has(key)) continue
+      if (typed && !key.includes(typed)) continue
+      seen.add(key)
+      rememberedOptions.push({ name: c.name, lat: c.lat, lng: c.lng, saved: c.kind })
+    }
+  }
+  const results: Option[] = [...savedOptions, ...rememberedOptions, ...geoResults]
   const wrapperRef = useRef<HTMLDivElement>(null)
   const listboxId = useId()
 
@@ -283,9 +317,9 @@ export function LocationInput({
                 >
                   <Icon size={16} className="shrink-0 mt-0.5 text-gray-400 dark:text-gray-500" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm text-gray-900 dark:text-gray-100">{r.saved ? r.placeDetail : r.name}</span>
-                    {r.saved && <span className="block truncate text-xs text-gray-500 dark:text-gray-400">{r.name}</span>}
-                    {!r.saved && r.placeDetail && (
+                    <span className="block truncate text-sm text-gray-900 dark:text-gray-100">{r.saved === 'home' || r.saved === 'work' ? r.placeDetail : r.name}</span>
+                    {(r.saved === 'home' || r.saved === 'work') && <span className="block truncate text-xs text-gray-500 dark:text-gray-400">{r.name}</span>}
+                    {(!r.saved || r.saved === 'favorite' || r.saved === 'recent') && r.placeDetail && (
                       <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                         <span className="truncate">{r.placeDetail}</span>
                         {r.openingHours && <OpenBadge spec={r.openingHours} />}
