@@ -42,6 +42,7 @@ const et: Dictionary = {
     toPlaceholder: 'Kuhu soovid minna?',
     removeFavorite: 'Eemalda lemmik',
     saveFavorite: 'Salvesta lemmikuks',
+    favoriteRoutes: 'Lemmikmarsruudid',
     clearSearch: 'Tühjenda otsing',
     done: 'Valmis',
     departNow: 'Väljub kohe',

@@ -41,6 +41,7 @@ const en = {
     toPlaceholder: 'Where to?',
     removeFavorite: 'Remove favorite',
     saveFavorite: 'Save as favorite',
+    favoriteRoutes: 'Favorite routes',
     clearSearch: 'Clear search',
     done: 'Done',
     departNow: 'Depart now',

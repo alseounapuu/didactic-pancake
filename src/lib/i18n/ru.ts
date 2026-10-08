@@ -42,6 +42,7 @@ const ru: Dictionary = {
     toPlaceholder: 'Куда направляетесь?',
     removeFavorite: 'Удалить из избранного',
     saveFavorite: 'Сохранить в избранное',
+    favoriteRoutes: 'Избранные маршруты',
     clearSearch: 'Очистить поиск',
     done: 'Готово',
     departNow: 'Отправление сейчас',
