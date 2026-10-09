@@ -6,6 +6,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { TALLINN_CENTER, DEFAULT_ZOOM, MODE_COLORS, CityDef } from '@/lib/constants'
 import { PickedPoints, VehiclePosition, TransportMode, RouteResult, ServiceAlert, TripStopInfo, TravellerPosition, TravellerSource } from '@/lib/types'
 import { decodePolyline } from '@/lib/decode-polyline'
+import { distanceMeters } from '@/lib/delay'
 import { formatAgo } from '@/lib/format-ago'
 import { useTranslation } from '@/lib/i18n/context'
 import { isLocationEnabled, useLocationSetting } from '@/hooks/use-location-setting'
@@ -194,6 +195,41 @@ function nearestPointIndex(coords: [number, number][], target: [number, number])
   return bestIdx
 }
 
+// Vehicle positions only arrive every ~12 s; instead of jumping there, a marker
+// (and its heading arrow) slides to the new spot. A jump over ~1 km (a vehicle
+// reassigned, a GPS glitch) or a rider who prefers reduced motion still snaps.
+const GLIDE_MS = 1500
+const GLIDE_MAX_JUMP_M = 1000
+
+function glideMarkers(
+  markers: maplibregl.Marker[],
+  to: { lat: number; lng: number },
+  frames: Map<maplibregl.Marker, number>,
+) {
+  const lead = markers[0]
+  const from = lead.getLngLat()
+  const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  const jumpM = distanceMeters(from.lat, from.lng, to.lat, to.lng)
+  const cancel = frames.get(lead)
+  if (cancel !== undefined) cancelAnimationFrame(cancel)
+  if (reduced || jumpM < 1 || jumpM > GLIDE_MAX_JUMP_M) {
+    frames.delete(lead)
+    markers.forEach((m) => m.setLngLat([to.lng, to.lat]))
+    return
+  }
+  const start = performance.now()
+  const step = (now: number) => {
+    const t = Math.min(1, (now - start) / GLIDE_MS)
+    const e = 1 - (1 - t) * (1 - t) // ease-out
+    const lng = from.lng + (to.lng - from.lng) * e
+    const lat = from.lat + (to.lat - from.lat) * e
+    markers.forEach((m) => m.setLngLat([lng, lat]))
+    if (t < 1) frames.set(lead, requestAnimationFrame(step))
+    else frames.delete(lead)
+  }
+  frames.set(lead, requestAnimationFrame(step))
+}
+
 interface RouteShapePattern {
   directionId: number
   geometry: string
@@ -311,6 +347,7 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
   useEffect(() => {
     vehiclesRef.current = vehicles
   })
+  const glideFramesRef = useRef(new Map<maplibregl.Marker, number>())
   const vehicleDotTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const incidentMarkersRef = useRef<maplibregl.Marker[]>([])
   const sharedPositionMarkerRef = useRef<maplibregl.Marker | null>(null)
@@ -1113,7 +1150,7 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
         const existing = markersRef.current.get(vehicle.id)
 
         if (existing) {
-          existing.setLngLat([vehicle.lng, vehicle.lat])
+          // (arrow glides with the pill; see below)
 
           // Fleet numbers get reassigned across lines/modes throughout the
           // day — refresh the pill's text/color/tooltip too, not just its
@@ -1140,9 +1177,9 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
             const offsetDist = Math.max(pillWidth / 2, 11) + 4
             const rad = (vehicle.heading * Math.PI) / 180
             arrowEntry.setOffset([Math.sin(rad) * offsetDist, -Math.cos(rad) * offsetDist])
-            arrowEntry.setLngLat([vehicle.lng, vehicle.lat])
             arrowEntry.setRotation(vehicle.heading)
           }
+          glideMarkers(arrowEntry ? [existing, arrowEntry] : [existing], vehicle, glideFramesRef.current)
         } else {
           const el = document.createElement('div')
           el.className = 'vehicle-marker'
@@ -1221,6 +1258,9 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
     // Remove markers for vehicles no longer present or filtered out
     markersRef.current.forEach((marker, id) => {
       if (!currentIds.has(id)) {
+        const frame = glideFramesRef.current.get(marker)
+        if (frame !== undefined) cancelAnimationFrame(frame)
+        glideFramesRef.current.delete(marker)
         marker.remove()
         markersRef.current.delete(id)
         const arrowMarker = arrowMarkersRef.current.get(id)
