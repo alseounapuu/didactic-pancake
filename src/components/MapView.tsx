@@ -405,6 +405,8 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
 
         let tripStops: TripStopInfo[] | null = null
         let tripGeometry: string | null = null
+        // Stops of the timetable-shape fallback below (no trip match) -- still drawn as dots.
+        let patternStops: RouteShapePattern['stops'] = []
         if (tripRes && tripRes.ok) {
           const tripData = await tripRes.json()
           tripStops = tripData.stops || null
@@ -455,6 +457,7 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
             }
           }
           tripStops = null
+          patternStops = bestPattern.stops
           if (!tripGeometry && bestPattern.geometry) {
             tripGeometry = bestPattern.geometry
           }
@@ -492,7 +495,11 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
           }
         } else {
           // No trip data — decode geometry if available
-          stopFeatures = []
+          stopFeatures = patternStops.map((stop) => ({
+            type: 'Feature' as const,
+            properties: { name: stop.name },
+            geometry: { type: 'Point' as const, coordinates: [stop.lng, stop.lat] },
+          }))
           if (tripGeometry) {
             lineCoords = decodePolyline(tripGeometry)
           }

@@ -63,27 +63,49 @@ export async function GET(request: Request) {
   const routeName = mode === 'tram' && !/^T/i.test(line) ? `T${line}` : line
 
   try {
-    const response = await fetch(`${OTP_BASE_URL}/otp/gtfs/v1`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: ROUTE_SHAPE_QUERY,
-        variables: { name: routeName, modes: [otpMode] },
-      }),
-      signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
-    })
-
-    if (!response.ok) {
-      throw new Error(`OTP returned ${response.status}`)
+    // The first lookup (mode-restricted, T-prefixed for trams) is the precise
+    // one. If it finds nothing, retry with looser variants rather than giving
+    // up -- a line the schedule knows under a slightly different name or mode
+    // used to leave the map without any route. The looser attempts only count
+    // when a shortName matches exactly, so they can never draw another line.
+    const attempts: { name: string; modes: string[] | null; exactOnly: boolean }[] = [
+      { name: routeName, modes: [otpMode], exactOnly: false },
+      { name: line, modes: [otpMode], exactOnly: true },
+      { name: routeName, modes: null, exactOnly: true },
+      { name: line, modes: null, exactOnly: true },
+    ]
+    let substringMatches: GqlRoute[] = []
+    const tried = new Set<string>()
+    for (const attempt of attempts) {
+      const key = `${attempt.name}|${attempt.modes?.join(',') ?? ''}`
+      if (tried.has(key)) continue
+      tried.add(key)
+      const response = await fetch(`${OTP_BASE_URL}/otp/gtfs/v1`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: ROUTE_SHAPE_QUERY,
+          variables: { name: attempt.name, modes: attempt.modes },
+        }),
+        signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
+      })
+      if (!response.ok) {
+        throw new Error(`OTP returned ${response.status}`)
+      }
+      const data = await response.json()
+      if (data.errors?.length) {
+        return NextResponse.json({ error: data.errors[0].message }, { status: 502 })
+      }
+      const found: GqlRoute[] = data.data?.routes || []
+      const usable = attempt.exactOnly
+        ? found.filter((r) => r.shortName.toLowerCase() === attempt.name.toLowerCase())
+        : found
+      if (usable.length > 0) {
+        substringMatches = usable
+        break
+      }
     }
 
-    const data = await response.json()
-
-    if (data.errors?.length) {
-      return NextResponse.json({ error: data.errors[0].message }, { status: 502 })
-    }
-
-    const substringMatches: GqlRoute[] = data.data?.routes || []
     if (substringMatches.length === 0) {
       return NextResponse.json({ error: 'Route not found' }, { status: 404 })
     }
@@ -92,7 +114,8 @@ export async function GET(request: Request) {
     // also returns "20".."28" (anything whose shortName contains "2"), and
     // this endpoint picks routes[0] with zero further disambiguation. Narrow
     // to an exact (case-insensitive) shortName match first.
-    const exactMatches = substringMatches.filter((r) => r.shortName.toLowerCase() === routeName.toLowerCase())
+    const wanted = substringMatches.some((r) => r.shortName.toLowerCase() === routeName.toLowerCase()) ? routeName.toLowerCase() : line.toLowerCase()
+    const exactMatches = substringMatches.filter((r) => r.shortName.toLowerCase() === wanted)
     const allRoutes = exactMatches.length > 0 ? exactMatches : substringMatches
 
     // bus/tram/trolleybus route numbers are NOT unique nationwide —
