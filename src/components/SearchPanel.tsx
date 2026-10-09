@@ -20,6 +20,8 @@ interface SearchPanelProps {
   activeCities?: CityDef[]
   onCityToggle?: (city: CityDef) => void
   onCountyToggle?: (countyCities: CityDef[]) => void
+  // False when the rider only wants their own vehicle on the map (Settings → show all vehicles off) — picking a region has no effect then.
+  showRegionSelector?: boolean
   onSetAllCities?: (cities: CityDef[]) => void
   // Lifted to page.tsx (like activeCities) rather than kept local, so a
   // "Get alternatives" re-search — which calls the plan hook directly,
@@ -51,7 +53,7 @@ interface SearchPanelProps {
   onPointsChange?: (points: PickedPoints) => void
 }
 
-export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, wheelchair = false, onViewStopBoard, onSelectLine, externalTrip, onExternalTripConsumed, onOpenMenu, onPointsChange }: SearchPanelProps) {
+export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, showRegionSelector = true, wheelchair = false, onViewStopBoard, onSelectLine, externalTrip, onExternalTripConsumed, onOpenMenu, onPointsChange }: SearchPanelProps) {
   const { t, locale } = useTranslation()
   const [panelMode, setPanelMode] = useState<'plan' | 'board'>('plan')
   const [fromText, setFromText] = useState('')
@@ -363,7 +365,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               : t('search.arriveAt'))}
           </button>
         )}
-        {activeCities && onCityToggle && onCountyToggle && onSetAllCities && (
+        {showRegionSelector && activeCities && onCityToggle && onCountyToggle && onSetAllCities && (
           <CitySelector activeCities={activeCities} onToggle={onCityToggle} onToggleCounty={onCountyToggle} onSetAll={onSetAllCities} />
         )}
         {favorites.length > 0 && (
