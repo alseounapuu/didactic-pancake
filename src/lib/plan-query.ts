@@ -10,6 +10,19 @@ import { dedupeItineraries } from '@/lib/feed-dedupe'
 // See its use in planTrip: how far past OTP's own auto-sized search window
 // to look before accepting that transit genuinely has nothing today.
 const WIDE_SEARCH_WINDOW_SECONDS = 24 * 60 * 60
+// How many itineraries to ask OTP for, and how far ahead of the requested time
+// (or back from it, when arriving by) to look for them. OTP's own defaults
+// returned just a handful, so riders could not see every connection that exists.
+const MAX_ITINERARIES = 20
+const PRIMARY_SEARCH_WINDOW_SECONDS = 4 * 60 * 60
+// OTP only returns the best trade-offs, so a bus leaving at the same time as
+// another but arriving a bit later is silently dropped. To still list every
+// vehicle that serves the journey we re-ask with the trips already found
+// banned, which forces OTP to surface the ones it had hidden. Capped so a
+// search stays quick; alternatives much slower than the best are ignored.
+const MAX_EXPANSION_ROUNDS = 3
+const MAX_TOTAL_ITINERARIES = 40
+const MAX_SLOWDOWN_FACTOR = 2
 
 const MODE_TO_OTP: Record<TransportMode, string> = {
   bus: 'BUS',
@@ -175,7 +188,8 @@ export async function planTrip(
     from: { lat: fromLat, lon: fromLng },
     to: { lat: toLat, lon: toLng },
     modes: transportModes,
-    numItineraries: 5,
+    numItineraries: MAX_ITINERARIES,
+    searchWindow: PRIMARY_SEARCH_WINDOW_SECONDS,
   }
 
   if (options.dateTime) {
@@ -208,7 +222,7 @@ export async function planTrip(
     }
 
     if (primary.itineraries.length > 0) {
-      return { routes: await buildRoutes(primary.itineraries) }
+      return { routes: await buildRoutes(await withHiddenAlternatives(variables, primary.itineraries)) }
     }
 
     // OTP sizes its own default search window from the typical service
@@ -222,7 +236,7 @@ export async function planTrip(
     // has nothing today.
     const widened = await fetchItineraries({ ...variables, searchWindow: WIDE_SEARCH_WINDOW_SECONDS })
     if (widened.itineraries.length > 0) {
-      return { routes: await buildRoutes(widened.itineraries) }
+      return { routes: await buildRoutes(await withHiddenAlternatives({ ...variables, searchWindow: WIDE_SEARCH_WINDOW_SECONDS }, widened.itineraries)) }
     }
 
     // No itinerary at all — before giving up, check whether a plain walk is
@@ -247,6 +261,39 @@ export async function planTrip(
     console.error('Failed to fetch route plan:', error)
     return { error: 'Route planning service unavailable', status: 502 }
   }
+}
+
+function tripIdsOf(itineraries: GqlItinerary[]): string[] {
+  return itineraries.flatMap((it) => it.legs.map((l) => l.trip?.gtfsId).filter((id): id is string => !!id))
+}
+
+// Repeatedly bans every trip found so far and searches again, merging in what
+// turns up. Best-effort: a failing extra round just ends the expansion, the
+// itineraries already found are always returned.
+export async function withHiddenAlternatives(
+  variables: Record<string, unknown>,
+  found: GqlItinerary[],
+): Promise<GqlItinerary[]> {
+  const all = [...found]
+  const userBanned = ((variables.banned as { trips?: string } | undefined)?.trips ?? '').split(',').filter(Boolean)
+  const best = Math.min(...found.map((it) => it.duration))
+
+  for (let round = 0; round < MAX_EXPANSION_ROUNDS && all.length < MAX_TOTAL_ITINERARIES; round++) {
+    const banned = [...new Set([...userBanned, ...tripIdsOf(all)])]
+    if (banned.length === userBanned.length) break
+    let next: GqlItinerary[]
+    try {
+      next = (await fetchItineraries({ ...variables, banned: { trips: banned.join(',') } })).itineraries
+    } catch {
+      break
+    }
+    const fresh = next.filter(
+      (it) => it.legs.some((l) => l.mode !== 'WALK') && it.duration <= best * MAX_SLOWDOWN_FACTOR,
+    )
+    if (fresh.length === 0) break
+    all.push(...fresh)
+  }
+  return all
 }
 
 async function fetchItineraries(
