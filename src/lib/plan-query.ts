@@ -10,6 +10,11 @@ import { dedupeItineraries } from '@/lib/feed-dedupe'
 // See its use in planTrip: how far past OTP's own auto-sized search window
 // to look before accepting that transit genuinely has nothing today.
 const WIDE_SEARCH_WINDOW_SECONDS = 24 * 60 * 60
+// How many itineraries to ask OTP for, and how far ahead of the requested time
+// (or back from it, when arriving by) to look for them. OTP's own defaults
+// returned just a handful, so riders could not see every connection that exists.
+const MAX_ITINERARIES = 20
+const PRIMARY_SEARCH_WINDOW_SECONDS = 4 * 60 * 60
 
 const MODE_TO_OTP: Record<TransportMode, string> = {
   bus: 'BUS',
@@ -175,7 +180,8 @@ export async function planTrip(
     from: { lat: fromLat, lon: fromLng },
     to: { lat: toLat, lon: toLng },
     modes: transportModes,
-    numItineraries: 5,
+    numItineraries: MAX_ITINERARIES,
+    searchWindow: PRIMARY_SEARCH_WINDOW_SECONDS,
   }
 
   if (options.dateTime) {
