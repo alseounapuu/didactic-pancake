@@ -276,7 +276,6 @@ const ru: Dictionary = {
     multipleLate: 'Сейчас опаздывает транспортных средств: {n}',
   },
   mapPopup: {
-    yourVehicle: 'Ваш {mode}',
     estimatedNotLive: 'Оценка по расписанию — не отслеживается в реальном времени',
     estimatedTrainNoSignal: 'Оценка по расписанию — поезд сейчас не передаёт GPS-позицию',
     liveGps: 'GPS в реальном времени',

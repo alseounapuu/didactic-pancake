@@ -128,3 +128,12 @@ body {
   left: 66px;
   bottom: 55px;
 }
+
+/* The "your vehicle" label on a picked journey: a compact one-liner (line →
+   destination) so it doesn't cover the map. */
+.journey-popup .maplibregl-popup-content {
+  padding: 3px 8px;
+  font-size: 11px;
+  line-height: 1.3;
+  white-space: nowrap;
+}

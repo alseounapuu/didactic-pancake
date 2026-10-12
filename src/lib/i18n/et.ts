@@ -276,7 +276,6 @@ const et: Dictionary = {
     multipleLate: '{n} sõidukit hilineb nüüd',
   },
   mapPopup: {
-    yourVehicle: 'Sinu {mode}',
     estimatedNotLive: 'Hinnatud sõiduplaani põhjal — ei jälgita reaalajas',
     estimatedTrainNoSignal: 'Sõiduplaani põhjal hinnatud — rong ei edasta praegu GPS-asukohta',
     liveGps: 'Reaalajas GPS',

@@ -1325,7 +1325,7 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
       el.style.fontFamily = 'system-ui, sans-serif'
       el.style.whiteSpace = 'nowrap'
       el.textContent = jv.line
-      el.title = `${tRef.current('mapPopup.yourVehicle', { mode: modeLabelRef.current(jv.mode) })} ${jv.line} → ${jv.destination}`
+      el.title = `${jv.line} → ${jv.destination}`
 
       // A hover-only tooltip is easy to miss entirely — this marker can
       // legitimately sit well off the drawn route line (the vehicle is
@@ -1333,8 +1333,8 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
       // always-visible label it reads as an unrelated, unlabeled dot
       // rather than "here's your bus, right now". Open immediately
       // instead of waiting for a hover/click that may never happen.
-      const popup = new maplibregl.Popup({ offset: 20, closeButton: false, closeOnClick: false }).setHTML(
-        `<strong>${tRef.current('mapPopup.yourVehicle', { mode: modeLabelRef.current(jv.mode) })}</strong><br/>${jv.line} → ${escapeHtml(jv.destination)}`,
+      const popup = new maplibregl.Popup({ offset: 16, closeButton: false, closeOnClick: false, className: 'journey-popup' }).setHTML(
+        `<strong>${escapeHtml(jv.line)}</strong> → ${escapeHtml(jv.destination)}`,
       )
       const marker = new maplibregl.Marker({ element: el }).setLngLat([jv.lng, jv.lat]).setPopup(popup).addTo(map)
       marker.togglePopup()

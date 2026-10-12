@@ -275,7 +275,6 @@ const en = {
     multipleLate: '{n} vehicles are now running late',
   },
   mapPopup: {
-    yourVehicle: 'Your {mode}',
     estimatedNotLive: 'Estimated from schedule — not live tracked',
     estimatedTrainNoSignal: 'Schedule estimate — this train is not reporting a GPS position right now',
     liveGps: 'Live GPS',
