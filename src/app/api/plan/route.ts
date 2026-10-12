@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { TransportMode } from '@/lib/types'
 import { planWithFerries } from '@/lib/ferry-plan'
+import { sortRoutesChronologically } from '@/lib/sort-routes'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -31,5 +32,5 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: result.error }, { status: result.status || 502 })
   }
 
-  return NextResponse.json({ routes: result.routes, notice: result.notice })
+  return NextResponse.json({ routes: result.routes && sortRoutesChronologically(result.routes), notice: result.notice })
 }
