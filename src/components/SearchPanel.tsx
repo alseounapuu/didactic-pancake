@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Star } from 'lucide-react'
+import { Star, X } from 'lucide-react'
 import { LocationInput } from './LocationInput'
 import { CitySelector } from './CitySelector'
 import { FavoriteChip } from './FavoriteChip'
@@ -333,37 +333,85 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                 {t('search.done')}
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => {
+                setPickerVisible(false)
+                // "Arrive by" needs a time, so backing out without one
+                // returns to a plain depart-now search.
+                if (!dateTime) setTimeMode('now')
+              }}
+              title={t('search.cancelTime')}
+              aria-label={t('search.cancelTime')}
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-300 shadow-md"
+            >
+              <X size={16} />
+            </button>
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => {
-              if (timeMode === 'now') {
-                setTimeMode('depart')
+          <div className="flex items-center gap-1.5">
+            {/* Depart | Arrive by — always one tap apart. No chosen time means
+                "now": the time chip says so and the search leaves now. */}
+            <div className="flex items-center p-0.5 rounded-full shadow-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-xs">
+              {(['depart', 'arrive'] as const).map((mode) => {
+                const active = (timeMode === 'arrive') === (mode === 'arrive')
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => {
+                      if (mode === 'arrive') {
+                        setTimeMode('arrive')
+                        if (!dateTime) setPickerVisible(true)
+                        else if (fromCoords && toCoords) handleSearch(fromCoords, toCoords, fromText, toText, dateTime, true)
+                      } else {
+                        setTimeMode(dateTime ? 'depart' : 'now')
+                        if (timeMode === 'arrive' && dateTime && fromCoords && toCoords) {
+                          handleSearch(fromCoords, toCoords, fromText, toText, dateTime, false)
+                        }
+                      }
+                    }}
+                    className={`px-3 py-2.5 rounded-full font-medium ${active ? 'bg-[#051650] text-white' : 'text-gray-600 dark:text-gray-300'}`}
+                  >
+                    {mode === 'arrive' ? t('search.arriveBy') : t('search.depart')}
+                  </button>
+                )
+              })}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (timeMode === 'now') setTimeMode('depart')
                 setPickerVisible(true)
-              } else if (timeMode === 'depart') {
-                setTimeMode('arrive')
-                if (!dateTime) {
-                  setPickerVisible(true)
-                } else if (fromCoords && toCoords) {
-                  handleSearch(fromCoords, toCoords, fromText, toText, dateTime, true)
-                }
-              } else {
-                setTimeMode('now')
-                setDateTime('')
-                if (fromCoords && toCoords) handleSearch(fromCoords, toCoords, fromText, toText, '', false)
-              }
-            }}
-            className={`px-4 py-3 rounded-full text-sm shadow-md border ${timeMode !== 'now' && dateTime ? 'bg-[#051650] border-[#DC6601] ring-1 ring-[#DC6601] text-white font-medium' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-          >
-            {timeMode === 'now' && t('search.departNow')}
-            {timeMode === 'depart' && (dateTime
-              ? t('search.departTime', { time: new Date(dateTime).toLocaleString(localeTag(locale), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }) })
-              : t('search.departAt'))}
-            {timeMode === 'arrive' && (dateTime
-              ? t('search.arriveTime', { time: new Date(dateTime).toLocaleString(localeTag(locale), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }) })
-              : t('search.arriveAt'))}
-          </button>
+              }}
+              className={`flex items-center gap-1 px-3 py-3 rounded-full text-xs shadow-md border ${dateTime ? 'bg-[#051650] border-[#DC6601] ring-1 ring-[#DC6601] text-white font-medium' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+            >
+              {dateTime
+                ? new Date(dateTime).toLocaleString(localeTag(locale), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })
+                : t('search.now')}
+              {dateTime && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  title={t('search.clearTime')}
+                  aria-label={t('search.clearTime')}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setDateTime('')
+                    setTimeMode('now')
+                    if (fromCoords && toCoords) handleSearch(fromCoords, toCoords, fromText, toText, '', false)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click()
+                  }}
+                  className="-mr-1 p-0.5 rounded-full hover:bg-white/20"
+                >
+                  <X size={12} />
+                </span>
+              )}
+            </button>
+          </div>
         )}
         {showRegionSelector && activeCities && onCityToggle && onCountyToggle && onSetAllCities && (
           <CitySelector activeCities={activeCities} onToggle={onCityToggle} onToggleCounty={onCountyToggle} onSetAll={onSetAllCities} />
