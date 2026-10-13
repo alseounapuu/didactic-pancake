@@ -117,6 +117,7 @@ const en = {
     fastest: 'Fastest',
     departure: 'Departure',
     cheapest: 'Cheapest',
+    leastWalking: 'Least walking',
     leastTraffic: 'Least traffic',
     closeRoutes: 'Close routes',
     copied: 'Copied',

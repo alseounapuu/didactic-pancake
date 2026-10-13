@@ -12,7 +12,7 @@ import { useTranslation } from '@/lib/i18n/context'
 import { useRiderProfile } from '@/hooks/use-rider-profile'
 import { priceItinerary } from '@/lib/fares/price'
 
-type SortMode = 'duration' | 'departure' | 'price' | 'traffic'
+type SortMode = 'duration' | 'departure' | 'price' | 'walking' | 'traffic'
 type ShareState = 'idle' | 'sharing' | 'error'
 
 // How far the sheet can be dragged, in vh — small enough to always leave
@@ -42,7 +42,7 @@ interface RouteResultsProps {
 export function RouteResults({ routes, loading, error, notice, selectedId, onSelect, onClose, delayVehicles, conditions, ridingTripId, onToggleRiding }: RouteResultsProps) {
   const { t } = useTranslation()
   const { profile } = useRiderProfile()
-  const [sortBy, setSortBy] = useState<SortMode>('duration')
+  const [sortBy, setSortBy] = useState<SortMode>('departure')
   const [shareState, setShareState] = useState<ShareState>('idle')
   const [shareLink, setShareLink] = useState<string | null>(null)
   const [linkCopied, setLinkCopied] = useState(false)
@@ -170,9 +170,14 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
   const trafficExcessOf = (route: RouteResult) => conditionsOf(route)?.totalMaxSeconds || 0
   const hasTrafficSignal = routes.some((r) => trafficExcessOf(r) > 0)
 
+  // Total time on foot — the same walking the card's footprint chip shows.
+  const walkSecondsOf = (route: RouteResult) =>
+    route.legs.filter((l) => l.mode === 'walk').reduce((sum, l) => sum + l.duration, 0)
+
   const sorted = [...routes].sort((a, b) => {
     if (sortBy === 'duration') return a.duration - b.duration
     if (sortBy === 'departure') return new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+    if (sortBy === 'walking') return walkSecondsOf(a) - walkSecondsOf(b) || new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
     if (sortBy === 'traffic') return (a.duration + trafficExcessOf(a)) - (b.duration + trafficExcessOf(b))
     // 'price' — an itinerary with no quotable total (evidence 'operator' or
     // 'unknown') sorts last, never first as if it were free.
@@ -237,13 +242,6 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => setSortBy('duration')}
-              className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'duration' ? 'bg-[#051650] text-white font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
-            >
-              {t('results.fastest')}
-            </button>
-            <button
-              type="button"
               onClick={() => setSortBy('departure')}
               className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'departure' ? 'bg-[#051650] text-white font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
             >
@@ -251,10 +249,24 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
             </button>
             <button
               type="button"
+              onClick={() => setSortBy('duration')}
+              className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'duration' ? 'bg-[#051650] text-white font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+            >
+              {t('results.fastest')}
+            </button>
+            <button
+              type="button"
               onClick={() => setSortBy('price')}
               className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'price' ? 'bg-[#051650] text-white font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
             >
               {t('results.cheapest')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSortBy('walking')}
+              className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'walking' ? 'bg-[#051650] text-white font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+            >
+              {t('results.leastWalking')}
             </button>
             {hasTrafficSignal && (
               // Only shown once at least one visible itinerary actually has
