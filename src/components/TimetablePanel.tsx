@@ -14,8 +14,8 @@ import { formatMinutesLocalized } from '@/lib/i18n/format'
 // RouteResults' journey panel, so a long stop list isn't stuck scrolling
 // inside a small fixed box. Default matches the previous fixed max-h-[38vh]
 // mobile cap.
-const MIN_SHEET_VH = 20
-const MAX_SHEET_VH = 75
+const MIN_SHEET_VH = 10
+const MAX_SHEET_VH = 90
 const DEFAULT_SHEET_VH = 38
 
 interface TimetablePanelProps {

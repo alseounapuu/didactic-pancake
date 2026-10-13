@@ -17,8 +17,8 @@ type ShareState = 'idle' | 'sharing' | 'error'
 
 // How far the sheet can be dragged, in vh — small enough to always leave
 // the search fields up top reachable, tall enough to read a long journey.
-const MIN_SHEET_VH = 25
-const MAX_SHEET_VH = 88
+const MIN_SHEET_VH = 10
+const MAX_SHEET_VH = 90
 
 interface RouteResultsProps {
   routes: RouteResult[]
@@ -198,7 +198,7 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
       className={`flex flex-col bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-lg ${sheetHeightVh === null ? (selectedId ? 'max-h-[85vh] sm:max-h-[70vh]' : 'max-h-[40vh] sm:max-h-80') : ''}`}
       style={sheetHeightVh !== null ? { maxHeight: `${sheetHeightVh}vh` } : undefined}
     >
-      <SheetHandle heightVh={sheetHeightVh ?? defaultSheetVh} minVh={MIN_SHEET_VH} maxVh={MAX_SHEET_VH} onResize={resizeSheet} label={t('results.resizePanel')} />
+      <SheetHandle heightVh={sheetHeightVh ?? defaultSheetVh} minVh={MIN_SHEET_VH} maxVh={MAX_SHEET_VH} onResize={resizeSheet} label={t('results.resizePanel')} showOnDesktop />
       <div className="flex items-center justify-between px-3 pt-1 pb-1">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">{selectedId ? t('results.yourJourney') : t('results.routes')}</h2>
         {selectedId && (
