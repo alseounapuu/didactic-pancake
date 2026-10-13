@@ -23,6 +23,10 @@ const PRIMARY_SEARCH_WINDOW_SECONDS = 4 * 60 * 60
 const MAX_EXPANSION_ROUNDS = 3
 const MAX_TOTAL_ITINERARIES = 40
 const MAX_SLOWDOWN_FACTOR = 2
+// Least time a rider must have to spare between getting off one vehicle and
+// boarding the next (walking between them not counted), so a small delay can't
+// make them miss the connection. Journeys with a tighter transfer are dropped.
+export const MIN_TRANSFER_SECONDS = 4 * 60
 
 const MODE_TO_OTP: Record<TransportMode, string> = {
   bus: 'BUS',
@@ -221,7 +225,7 @@ export async function planTrip(
       return { error: primary.hardError, status: 502 }
     }
 
-    if (primary.itineraries.length > 0) {
+    if (primary.itineraries.some(hasSafeTransfers)) {
       return { routes: await buildRoutes(await withHiddenAlternatives(variables, primary.itineraries)) }
     }
 
@@ -235,7 +239,7 @@ export async function planTrip(
     // once with a full day's window before concluding transit genuinely
     // has nothing today.
     const widened = await fetchItineraries({ ...variables, searchWindow: WIDE_SEARCH_WINDOW_SECONDS })
-    if (widened.itineraries.length > 0) {
+    if (widened.itineraries.some(hasSafeTransfers)) {
       return { routes: await buildRoutes(await withHiddenAlternatives({ ...variables, searchWindow: WIDE_SEARCH_WINDOW_SECONDS }, widened.itineraries)) }
     }
 
@@ -263,6 +267,27 @@ export async function planTrip(
   }
 }
 
+// True when every change between two transit legs leaves at least
+// MIN_TRANSFER_SECONDS of waiting, after subtracting any walking in between —
+// the same "wait" the route card shows. A journey with one vehicle always passes.
+export function hasSafeTransfers(it: GqlItinerary): boolean {
+  let prevTransitEnd: number | null = null
+  let walkedSeconds = 0
+  for (const leg of it.legs) {
+    if (leg.mode === 'WALK') {
+      walkedSeconds += leg.duration
+      continue
+    }
+    if (prevTransitEnd !== null) {
+      const gapSeconds = (new Date(resolveTime(leg.start)).getTime() - prevTransitEnd) / 1000
+      if (gapSeconds - walkedSeconds < MIN_TRANSFER_SECONDS) return false
+    }
+    prevTransitEnd = new Date(resolveTime(leg.end)).getTime()
+    walkedSeconds = 0
+  }
+  return true
+}
+
 function tripIdsOf(itineraries: GqlItinerary[]): string[] {
   return itineraries.flatMap((it) => it.legs.map((l) => l.trip?.gtfsId).filter((id): id is string => !!id))
 }
@@ -276,7 +301,7 @@ export async function withHiddenAlternatives(
 ): Promise<GqlItinerary[]> {
   const all = [...found]
   const userBanned = ((variables.banned as { trips?: string } | undefined)?.trips ?? '').split(',').filter(Boolean)
-  const best = Math.min(...found.map((it) => it.duration))
+  const best = Math.min(...found.filter(hasSafeTransfers).map((it) => it.duration))
 
   for (let round = 0; round < MAX_EXPANSION_ROUNDS && all.length < MAX_TOTAL_ITINERARIES; round++) {
     const banned = [...new Set([...userBanned, ...tripIdsOf(all)])]
@@ -293,7 +318,9 @@ export async function withHiddenAlternatives(
     if (fresh.length === 0) break
     all.push(...fresh)
   }
-  return all
+  // Unsafe ones were kept in `all` only so their trips got banned (otherwise
+  // OTP would keep handing the same ones back); they never reach the rider.
+  return all.filter(hasSafeTransfers)
 }
 
 async function fetchItineraries(
