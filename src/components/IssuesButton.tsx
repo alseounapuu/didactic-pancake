@@ -23,19 +23,17 @@ export function IssuesButton({ active, count, degraded, onClick }: IssuesButtonP
       onClick={onClick}
       className={`relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center border-2 backdrop-blur-xl ${
         active
-          ? 'bg-amber-100/90 dark:bg-amber-900/80 border-amber-500'
+          ? 'bg-[#051650] border-[#051650]'
           : degraded
             ? 'bg-white/85 dark:bg-gray-900/80 border-red-400 hover:bg-red-50 dark:hover:bg-red-950'
-            : hasIssues
-              ? 'bg-white/85 dark:bg-gray-900/80 border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950'
-              : 'bg-white/85 dark:bg-gray-900/80 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
+            : 'bg-white/85 dark:bg-gray-900/80 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
       }`}
       title={degraded ? t('issuesButton.unavailable') : active ? t('issuesButton.hide') : t('issuesButton.show', { count })}
     >
       <AlertTriangle
         size={24}
         fill={hasIssues ? '#FBBF24' : 'none'}
-        stroke={active ? '#B45309' : degraded ? '#DC2626' : hasIssues ? '#D97706' : '#6B7280'}
+        stroke={active ? '#FFFFFF' : degraded ? '#DC2626' : hasIssues ? '#D97706' : '#6B7280'}
         strokeWidth={2}
       />
       {degraded && (
