@@ -282,6 +282,45 @@ interface MapViewProps {
   onRouteShapeError?: () => void
 }
 
+// The basemap (CARTO Positron) only paints a hairline outline for big roads
+// until zoom ~10, so a country-wide view looked empty. These soft grey lines
+// fill that gap for motorways/trunk/primary/secondary roads; they fade out
+// as the basemap's own road fills take over, and sit under all labels.
+function addOverviewRoads(map: maplibregl.Map) {
+  try {
+    const firstSymbol = map.getStyle().layers.find((l) => l.type === 'symbol')?.id
+    const tiers: { id: string; classes: string[]; minzoom: number; color: string; width: [number, number][] }[] = [
+      { id: 'overview-roads-secondary', classes: ['secondary'], minzoom: 8, color: '#e3e6ea', width: [[8, 0.4], [10, 0.9]] },
+      { id: 'overview-roads-primary', classes: ['primary'], minzoom: 6, color: '#d5d9df', width: [[6, 0.5], [8, 0.8], [10, 1.3]] },
+      { id: 'overview-roads-major', classes: ['motorway', 'trunk'], minzoom: 4, color: '#c7ccd4', width: [[4, 0.6], [7, 1], [10, 1.8]] },
+    ]
+    for (const tier of tiers) {
+      map.addLayer(
+        {
+          id: tier.id,
+          type: 'line',
+          source: 'carto',
+          'source-layer': 'transportation',
+          minzoom: tier.minzoom,
+          maxzoom: 11.5,
+          filter: ['all', ['in', 'class', ...tier.classes], ['!=', 'ramp', 1]],
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint: {
+            'line-color': tier.color,
+            'line-width': ['interpolate', ['linear'], ['zoom'], ...tier.width.flat()],
+            'line-opacity': ['interpolate', ['linear'], ['zoom'], 9.5, 1, 11.5, 0],
+          },
+        },
+        firstSymbol,
+      )
+    }
+  } catch (error) {
+    // Purely cosmetic: if the basemap's layout ever changes, the map just
+    // looks like it did before.
+    console.warn('Overview roads not added:', error)
+  }
+}
+
 export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRoute, journeyVehicles, travellerPosition, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, focusLine, lineShape, onVehicleClick, onRouteShapeError }: MapViewProps) {
   const { t, locale, modeLabel } = useTranslation()
   // Popups/titles are built inside map event closures set up once at mount
@@ -777,6 +816,7 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
 
     map.on('load', () => {
       mapReadyRef.current = true
+      addOverviewRoads(map)
 
       // Clustered GeoJSON source for vehicle grouping
       map.addSource(VEHICLE_CLUSTER_SOURCE, {

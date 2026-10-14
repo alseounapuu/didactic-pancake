@@ -339,7 +339,12 @@ async function fetchItineraries(
   }
 
   const data = await response.json()
-  const itineraries: GqlItinerary[] = data.data?.plan?.itineraries || []
+  let itineraries: GqlItinerary[] = data.data?.plan?.itineraries || []
+  // With wheelchair routing on, never show a journey that rides a vehicle the
+  // feed explicitly marks as not accessible (unknown stays allowed).
+  if (variables.wheelchair) {
+    itineraries = itineraries.filter((it) => !it.legs.some((l) => l.trip?.wheelchairAccessible === 'NOT_POSSIBLE'))
+  }
 
   if (data.errors?.length) {
     const nonFareErrors = data.errors.filter((e: { message?: string }) => !e.message?.includes('currency'))
