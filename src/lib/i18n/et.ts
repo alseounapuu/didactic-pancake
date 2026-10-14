@@ -119,7 +119,6 @@ const et: Dictionary = {
     departure: 'Väljumine',
     cheapest: 'Odavaim',
     leastWalking: 'Vähim jalgsi',
-    leastTraffic: 'Vähim liiklus',
     closeRoutes: 'Sulge marsruudid',
     copied: 'Kopeeritud',
     copy: 'Kopeeri',

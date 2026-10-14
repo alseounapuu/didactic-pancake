@@ -119,7 +119,6 @@ const ru: Dictionary = {
     departure: 'Отправление',
     cheapest: 'Дешевле',
     leastWalking: 'Меньше пешком',
-    leastTraffic: 'Меньше трафика',
     closeRoutes: 'Закрыть маршруты',
     copied: 'Скопировано',
     copy: 'Копировать',

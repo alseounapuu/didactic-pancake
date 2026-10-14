@@ -12,7 +12,7 @@ import { useTranslation } from '@/lib/i18n/context'
 import { useRiderProfile } from '@/hooks/use-rider-profile'
 import { priceItinerary } from '@/lib/fares/price'
 
-type SortMode = 'duration' | 'departure' | 'price' | 'walking' | 'traffic'
+type SortMode = 'duration' | 'departure' | 'price' | 'walking'
 type ShareState = 'idle' | 'sharing' | 'error'
 
 // How far the sheet can be dragged, in vh — small enough to always leave
@@ -162,23 +162,22 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
   // keeps the sort and each RouteCard's own chip using the exact same number.
   const priceOf = (route: RouteResult) => priceItinerary(route, profile).totalCents
   const conditionsOf = (route: RouteResult) => conditions?.find((c) => c.routeId === route.id)
-  // The upper bound, not the midpoint — a sort labelled "Traffic" should be
+  // The upper bound, not the midpoint — the Fastest sort should be
   // conservative rather than optimistic, and it's the same number the card's
   // own chip shows. An itinerary with no coverage counts as zero excess: it
   // is neither penalised nor rewarded for being unmeasured, the same
   // "unknown never masquerades as free" rule the price sort applies below.
   const trafficExcessOf = (route: RouteResult) => conditionsOf(route)?.totalMaxSeconds || 0
-  const hasTrafficSignal = routes.some((r) => trafficExcessOf(r) > 0)
 
   // Total time on foot — the same walking the card's footprint chip shows.
   const walkSecondsOf = (route: RouteResult) =>
     route.legs.filter((l) => l.mode === 'walk').reduce((sum, l) => sum + l.duration, 0)
 
   const sorted = [...routes].sort((a, b) => {
-    if (sortBy === 'duration') return a.duration - b.duration
+    // Fastest = timetable time plus expected traffic delay; equal totals fall back to the timetable time.
+    if (sortBy === 'duration') return (a.duration + trafficExcessOf(a)) - (b.duration + trafficExcessOf(b)) || a.duration - b.duration
     if (sortBy === 'departure') return new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
     if (sortBy === 'walking') return walkSecondsOf(a) - walkSecondsOf(b) || new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-    if (sortBy === 'traffic') return (a.duration + trafficExcessOf(a)) - (b.duration + trafficExcessOf(b))
     // 'price' — an itinerary with no quotable total (evidence 'operator' or
     // 'unknown') sorts last, never first as if it were free.
     const priceA = priceOf(a)
@@ -268,18 +267,6 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
             >
               {t('results.leastWalking')}
             </button>
-            {hasTrafficSignal && (
-              // Only shown once at least one visible itinerary actually has
-              // an estimate — otherwise this tab would sort identically to
-              // Fastest and read as broken.
-              <button
-                type="button"
-                onClick={() => setSortBy('traffic')}
-                className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'traffic' ? 'bg-[#051650] text-white font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
-              >
-                {t('results.leastTraffic')}
-              </button>
-            )}
             {onClose && (
               <button
                 type="button"
