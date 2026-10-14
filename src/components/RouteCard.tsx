@@ -108,8 +108,22 @@ function LegAlertRow({ leg }: { leg: RouteLeg }) {
 // chip below, but neutral rather than amber — this is a pricing-confidence
 // axis, not a delay one) since the number is only a lower bound or absent
 // entirely. 'unknown' renders nothing rather than a fabricated number.
-function FareChip({ fare, locale, t }: { fare: ItineraryFare; locale: Locale; t: (path: string, vars?: Record<string, string | number>) => string }) {
-  if (fare.evidence === 'unknown' || fare.evidence === 'operator') return null
+function FareChip({ fare, locale, t, singleVehicle }: { fare: ItineraryFare; locale: Locale; singleVehicle: boolean; t: (path: string, vars?: Record<string, string | number>) => string }) {
+  if (fare.evidence === 'unknown') return null
+  if (fare.evidence === 'operator') {
+    // "Price at operator" only makes sense as a header chip for a one-vehicle
+    // journey; with several vehicles the ticket list below covers each one.
+    if (!singleVehicle) return null
+    const url = fare.tickets.find((ticket) => ticket.evidence === 'operator' && ticket.fareUrl)?.fareUrl
+    const chipClass = 'text-xs text-gray-500 dark:text-gray-400 font-medium border border-gray-300 dark:border-gray-600 rounded px-1'
+    return url ? (
+      <a href={url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className={`${chipClass} hover:underline`}>
+        {t('fare.atOperator')} →
+      </a>
+    ) : (
+      <span className={chipClass}>{t('fare.atOperator')}</span>
+    )
+  }
   if (fare.totalCents === undefined) return null
   if (fare.evidence === 'floor') {
     return (
@@ -462,7 +476,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, conditions
           )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          <FareChip fare={fare} locale={locale} t={t} />
+          <FareChip fare={fare} locale={locale} t={t} singleVehicle={transitLegs.length === 1 && !selected} />
           <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{formatMinutesLocalized(totalMinutes, t)}</span>
         </div>
       </div>
