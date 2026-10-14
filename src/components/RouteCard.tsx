@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Footprints, X, Hourglass } from 'lucide-react'
+import { Footprints, Hourglass } from 'lucide-react'
 import { RouteResult, RouteLeg, LegPlace, TransportMode, ItineraryConditions, LegTrafficEstimate, ItineraryFare } from '@/lib/types'
 import { MODE_COLORS } from '@/lib/constants'
 import { ROUTE_PLAN_MATCH_WINDOW_SEC, findVehicleForLeg } from '@/lib/delay'
@@ -464,17 +464,6 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, conditions
         <div className="flex items-center gap-1.5 shrink-0">
           <FareChip fare={fare} locale={locale} t={t} />
           <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{formatMinutesLocalized(totalMinutes, t)}</span>
-          {selected && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onSelect() }}
-              title={t('route.removeJourney')}
-              aria-label={t('route.removeJourney')}
-              className="p-0.5 -m-0.5 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              <X size={14} />
-            </button>
-          )}
         </div>
       </div>
       {expandedChipIndex !== null && transitLegs[expandedChipIndex] && (
