@@ -80,7 +80,7 @@ const et: Dictionary = {
     durationHours: '{h}h',
     durationHoursMin: '{h}h {m}min',
     walk: 'Jalgsi',
-    walkMin: 'Jalgsi {n} min',
+    walkMin: 'Jalgsi {duration}',
     includesWalking: 'Sisaldab jalgsikäiku',
     waitAtStop: 'Ootad {duration} peatuses {stop}',
     removeJourney: 'Eemalda teekond',

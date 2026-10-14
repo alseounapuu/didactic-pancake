@@ -80,7 +80,7 @@ const ru: Dictionary = {
     durationHours: '{h} ч',
     durationHoursMin: '{h} ч {m} мин',
     walk: 'Пешком',
-    walkMin: 'Пешком {n} мин',
+    walkMin: 'Пешком {duration}',
     includesWalking: 'Включает пешую часть',
     waitAtStop: 'Ожидание {duration} на остановке {stop}',
     removeJourney: 'Удалить маршрут',

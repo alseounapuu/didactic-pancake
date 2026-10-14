@@ -301,7 +301,7 @@ function ExpandableLeg({
               })}
             </span>
           )}
-          <span className="text-xs text-gray-400 dark:text-gray-500">{t('common.minShort', { n: Math.round(leg.duration / 60) })}</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">{formatMinutesLocalized(Math.round(leg.duration / 60), t)}</span>
           {stops.length > 0 && (
             <svg
               className={`w-3.5 h-3.5 text-gray-400 ${expanded ? 'rotate-180' : ''}`}
@@ -469,7 +469,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, conditions
                   title={t('route.includesWalking')}
                 >
                   <Footprints size={12} />
-                  {t('route.durationMin', { n: walkMinutes })}
+                  {formatMinutesLocalized(walkMinutes, t)}
                 </span>
               )}
             </>
@@ -531,7 +531,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, conditions
                 <div className="flex items-center gap-2 py-1.5 text-xs text-gray-400 dark:text-gray-500">
                   <span className="font-medium text-gray-500 dark:text-gray-400">{formatTime(leg.startTime)}</span>
                   <Footprints size={14} />
-                  <span>{t('route.walkMin', { n: Math.round(leg.duration / 60) })}</span>
+                  <span>{t('route.walkMin', { duration: formatMinutesLocalized(Math.round(leg.duration / 60), t) })}</span>
                   <span>&rarr; {formatTime(leg.endTime)}</span>
                 </div>
               ) : (

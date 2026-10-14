@@ -79,7 +79,7 @@ const en = {
     durationHours: '{h}h',
     durationHoursMin: '{h}h {m}min',
     walk: 'Walk',
-    walkMin: 'Walk {n} min',
+    walkMin: 'Walk {duration}',
     includesWalking: 'Includes walking',
     waitAtStop: 'Wait {duration} at {stop}',
     removeJourney: 'Remove journey',
