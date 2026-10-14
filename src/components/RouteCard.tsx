@@ -508,7 +508,11 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, conditions
                 })}
               </span>
             ) : (
-              <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">{t('route.scheduled')}</span>
+              // Only once the first vehicle should already be running; before that
+              // there is nothing to report, so show nothing.
+              new Date(transitLegs[0].startTime).getTime() <= nowMs ? (
+                <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">{t('route.scheduled')}</span>
+              ) : null
             )
           ) : delayMinutes > 0 ? (
             <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{t('route.delaySuffix', { duration: formatMinutesLocalized(delayMinutes, t) })}</span>
